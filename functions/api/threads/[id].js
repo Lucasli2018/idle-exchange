@@ -23,6 +23,16 @@ export async function onRequestGet({ request, env, params }) {
 
   const r = await requireParticipant(env, convId, clientId);
   if (r.error) return fail(r.error, r.status);
+  const conv = r.conv;
+
+  // 打开会话即清零我的未读（buyer/seller 各自记录已读时间）
+  const now = nowMs();
+  await env.DB.prepare(`
+    UPDATE conversations SET
+      buyer_read_at  = CASE WHEN buyer_id  = ? THEN ? ELSE buyer_read_at  END,
+      seller_read_at = CASE WHEN seller_id = ? THEN ? ELSE seller_read_at END
+    WHERE id = ?
+  `).bind(clientId, now, clientId, now, convId).run();
 
   const rows = await env.DB.prepare(
     "SELECT sender_id, body, created_at FROM messages WHERE conv_id = ? ORDER BY created_at ASC LIMIT 200"
@@ -35,7 +45,11 @@ export async function onRequestGet({ request, env, params }) {
     createdAt: m.created_at,
   }));
 
-  return json({ convId, messages });
+  return json({
+    convId,
+    messages,
+    item: { id: conv.item_id },
+  });
 }
 
 export async function onRequestPost({ request, env, params }) {

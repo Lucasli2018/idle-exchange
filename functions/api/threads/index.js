@@ -1,5 +1,5 @@
 // GET /api/threads?clientId=&limit=   我的会话列表（双方视角统一）
-// 返回：{threads:[{id,itemId,itemTitle,otherId,otherName,lastBody,lastAt}], total}
+// 返回：{threads:[{...,unread}], total, totalUnread}
 
 import { json, fail, getNumber } from "../../_shared/helpers.js";
 
@@ -17,7 +17,11 @@ export async function onRequestGet({ request, env }) {
         WHERE u.client_id = CASE WHEN c.buyer_id = ?1 THEN c.seller_id ELSE c.buyer_id END
       ) AS other_name,
       (SELECT body FROM messages m WHERE m.conv_id = c.id
-        ORDER BY m.created_at DESC LIMIT 1) AS last_body
+        ORDER BY m.created_at DESC LIMIT 1) AS last_body,
+      (SELECT COUNT(*) FROM messages m WHERE m.conv_id = c.id
+        AND m.sender_id != ?1
+        AND m.created_at > CASE WHEN c.buyer_id = ?1 THEN c.buyer_read_at ELSE c.seller_read_at END
+      ) AS unread
     FROM conversations c
     JOIN items i ON i.id = c.item_id AND i.status != 'removed'
     WHERE c.buyer_id = ?1 OR c.seller_id = ?1
@@ -32,7 +36,9 @@ export async function onRequestGet({ request, env }) {
     otherName: r.other_name || "用户",
     lastBody: r.last_body || "",
     lastAt: r.last_at,
+    unread: r.unread || 0,
   }));
 
-  return json({ threads, total: threads.length });
+  const totalUnread = threads.reduce((s, t) => s + t.unread, 0);
+  return json({ threads, total: threads.length, totalUnread });
 }

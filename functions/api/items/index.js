@@ -27,6 +27,7 @@ export async function onRequestGet({ request, env }) {
   const type = p.get("type");
   const status = p.get("status");
   const owner = p.get("owner");
+  const community = (p.get("community") || "").trim();
   const q = (p.get("q") || "").trim();
   const sort = p.get("sort") || "newest";
   const limit = Math.min(getNumber(p, "limit", 30), 100);
@@ -54,6 +55,10 @@ export async function onRequestGet({ request, env }) {
   if (type && TYPES.includes(type)) {
     where.push("type = ?");
     binds.push(type);
+  }
+  if (community) {
+    where.push("community = ?");
+    binds.push(community);
   }
   if (q) {
     where.push("(title LIKE ? OR description LIKE ?)");

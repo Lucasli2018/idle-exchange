@@ -71,12 +71,14 @@ async function ensureDatabase(env) {
         created_at INTEGER NOT NULL
       )`,
       `CREATE TABLE IF NOT EXISTS conversations (
-        id         INTEGER PRIMARY KEY AUTOINCREMENT,
-        item_id    INTEGER NOT NULL,
-        buyer_id   TEXT    NOT NULL,
-        seller_id  TEXT    NOT NULL,
-        created_at INTEGER NOT NULL,
-        last_at    INTEGER NOT NULL,
+        id             INTEGER PRIMARY KEY AUTOINCREMENT,
+        item_id        INTEGER NOT NULL,
+        buyer_id       TEXT    NOT NULL,
+        seller_id      TEXT    NOT NULL,
+        created_at     INTEGER NOT NULL,
+        last_at        INTEGER NOT NULL,
+        buyer_read_at  INTEGER NOT NULL DEFAULT 0,
+        seller_read_at INTEGER NOT NULL DEFAULT 0,
         UNIQUE(item_id, buyer_id)
       )`,
       `CREATE INDEX IF NOT EXISTS idx_conv_buyer  ON conversations(buyer_id,  last_at DESC)`,
@@ -101,6 +103,8 @@ async function ensureDatabase(env) {
       { table: "users", column: "password_hash", ddl: "ALTER TABLE users ADD COLUMN password_hash TEXT" },
       { table: "users", column: "password_salt", ddl: "ALTER TABLE users ADD COLUMN password_salt TEXT" },
       { table: "users", column: "email", ddl: "ALTER TABLE users ADD COLUMN email TEXT" },
+      { table: "conversations", column: "buyer_read_at", ddl: "ALTER TABLE conversations ADD COLUMN buyer_read_at INTEGER NOT NULL DEFAULT 0" },
+      { table: "conversations", column: "seller_read_at", ddl: "ALTER TABLE conversations ADD COLUMN seller_read_at INTEGER NOT NULL DEFAULT 0" },
     ];
     for (const u of upgrades) {
       const cols = await env.DB.prepare(`PRAGMA table_info(${u.table})`).all();

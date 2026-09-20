@@ -74,12 +74,14 @@ CREATE TABLE IF NOT EXISTS reports (
 
 -- 站内私信（v0.4.0）：买家对物品的会话，卖家即物品 owner
 CREATE TABLE IF NOT EXISTS conversations (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  item_id    INTEGER NOT NULL,
-  buyer_id   TEXT    NOT NULL,
-  seller_id  TEXT    NOT NULL,
-  created_at INTEGER NOT NULL,
-  last_at    INTEGER NOT NULL,
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  item_id        INTEGER NOT NULL,
+  buyer_id       TEXT    NOT NULL,
+  seller_id      TEXT    NOT NULL,
+  created_at     INTEGER NOT NULL,
+  last_at        INTEGER NOT NULL,
+  buyer_read_at  INTEGER NOT NULL DEFAULT 0,
+  seller_read_at INTEGER NOT NULL DEFAULT 0,
   UNIQUE(item_id, buyer_id)
 );
 CREATE INDEX IF NOT EXISTS idx_conv_buyer  ON conversations(buyer_id,  last_at DESC);
