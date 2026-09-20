@@ -1,8 +1,9 @@
 // POST /api/upload
-// 上传物品图片到 R2，返回 key 与可访问 URL（公开访问，无需鉴权）
+// 上传物品图片到 R2，返回 key 与可访问 URL（公开访问，带简单频率限制）
 //
 // Body: multipart/form-data
 //   - file: 图片文件（≤ 5 MB，仅 jpg/png/webp）
+//   - clientId: 发布者标识（可选，用于限流）
 //
 // 返回：{ key, url: "/api/files/<key>", size, type }
 
@@ -15,6 +16,22 @@ const ALLOWED = {
   "image/webp": "webp",
 };
 
+// 简单滑动窗口限流（单实例内存，MVP 防滥用足够）
+const RATE_LIMIT = 12;        // 每窗口次数
+const RATE_WINDOW = 60_000;   // 1 分钟
+const rateMap = new Map();
+
+function allowUpload(clientId) {
+  const now = Date.now();
+  // 防 Map 无限膨胀
+  if (rateMap.size > 10_000) rateMap.clear();
+  const arr = (rateMap.get(clientId) || []).filter(t => now - t < RATE_WINDOW);
+  if (arr.length >= RATE_LIMIT) return false;
+  arr.push(now);
+  rateMap.set(clientId, arr);
+  return true;
+}
+
 export async function onRequestPost({ request, env }) {
   const ctype = request.headers.get("content-type") || "";
   if (!ctype.startsWith("multipart/form-data")) {
@@ -26,6 +43,11 @@ export async function onRequestPost({ request, env }) {
     form = await request.formData();
   } catch {
     return fail("表单解析失败", 400);
+  }
+
+  const clientId = (form.get("clientId") || "anon").toString().slice(0, 64);
+  if (!allowUpload(clientId)) {
+    return fail("上传太频繁，请稍后再试", 429);
   }
 
   const file = form.get("file");

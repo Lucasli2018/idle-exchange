@@ -15,33 +15,10 @@ import {
   json, fail, readJson, getString, getNumber,
   nowMs, validateItemInput,
 } from "../../_shared/helpers.js";
+import { rowToItem } from "../../_shared/items.js";
 
 const CATEGORIES = ["数码", "家居", "图书", "服饰", "母婴", "运动", "美食", "其他"];
 const TYPES = ["sell", "free", "exchange", "wanted"];
-
-function rowToItem(r) {
-  let images = [];
-  try { images = JSON.parse(r.images || "[]"); } catch {}
-  // 存储层是 R2 key，展示层统一拼接代理 URL（前端可直接作为 img src）
-  images = images.map(k => `/api/files/${encodeURIComponent(k)}`);
-  return {
-    id: r.id,
-    ownerId: r.owner_id,
-    title: r.title,
-    description: r.description,
-    category: r.category,
-    type: r.type,
-    price: r.price,
-    community: r.community,
-    contactName: r.contact_name,
-    contactWechat: r.contact_wechat,
-    contactPhone: r.contact_phone,
-    images,
-    status: r.status,
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
-  };
-}
 
 export async function onRequestGet({ request, env }) {
   const p = new URL(request.url).searchParams;

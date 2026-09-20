@@ -3,39 +3,34 @@
 // DELETE /api/items/:id       删除物品（仅发布者，需 ?clientId=）
 
 import { json, fail, readJson, getString, nowMs } from "../../_shared/helpers.js";
+import { rowToItem } from "../../_shared/items.js";
 
-function rowToItem(r) {
-  let images = [];
-  try { images = JSON.parse(r.images || "[]"); } catch {}
-  // 存储层是 R2 key，展示层统一拼接代理 URL（前端可直接作为 img src）
-  images = images.map(k => `/api/files/${encodeURIComponent(k)}`);
-  return {
-    id: r.id,
-    ownerId: r.owner_id,
-    title: r.title,
-    description: r.description,
-    category: r.category,
-    type: r.type,
-    price: r.price,
-    community: r.community,
-    contactName: r.contact_name,
-    contactWechat: r.contact_wechat,
-    contactPhone: r.contact_phone,
-    images,
-    status: r.status,
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
-  };
-}
-
-export async function onRequestGet({ env, params }) {
+export async function onRequestGet({ request, env, params }) {
   const id = Number(params.id);
   if (!Number.isInteger(id)) return fail("无效的 id", 400);
   const row = await env.DB.prepare(
     "SELECT * FROM items WHERE id = ? AND status != 'removed'"
   ).bind(id).first();
   if (!row) return fail("物品不存在", 404);
-  return json(rowToItem(row));
+
+  // 浏览量自增（详情页每次访问 +1）
+  await env.DB.prepare("UPDATE items SET views = views + 1 WHERE id = ?")
+    .bind(id).run();
+
+  // 可选：带 clientId 时返回收藏状态
+  const clientId = new URL(request.url).searchParams.get("clientId");
+  let favorited = false;
+  if (clientId) {
+    const fav = await env.DB.prepare(
+      "SELECT 1 FROM favorites WHERE client_id = ? AND item_id = ?"
+    ).bind(clientId, id).first();
+    favorited = !!fav;
+  }
+
+  const item = rowToItem(row);
+  item.views = (row.views || 0) + 1;
+  item.favorited = favorited;
+  return json(item);
 }
 
 export async function onRequestPatch({ request, env, params }) {
