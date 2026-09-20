@@ -1,14 +1,24 @@
-// items 领域共享：行 → API 对象
+// items 领域共享：图片 URL 拼接 + 行 → API 对象
 // 注意各目录引用深度：
 //   functions/api/*.js            → ../_shared/items.js
 //   functions/api/items/*.js      → ../../_shared/items.js
 //   functions/api/items/[id]/*.js → ../../../_shared/items.js
 
-export function rowToItem(r) {
+// 图片展示 URL：配置了 R2_PUBLIC_BASE（自定义公开域/r2.dev）时直连 R2，
+// 否则回退 /api/files/<key> Function 代理
+export function imageUrls(env, keys) {
+  const base = env && env.R2_PUBLIC_BASE
+    ? String(env.R2_PUBLIC_BASE).replace(/\/+$/, "")
+    : "";
+  return keys.map(k =>
+    base ? `${base}/${encodeURIComponent(k)}` : `/api/files/${encodeURIComponent(k)}`
+  );
+}
+
+export function rowToItem(r, env) {
   let images = [];
   try { images = JSON.parse(r.images || "[]"); } catch {}
-  // 存储层是 R2 key，展示层统一拼接代理 URL（前端可直接作为 img src）
-  images = images.map(k => `/api/files/${encodeURIComponent(k)}`);
+  images = imageUrls(env, images); // 存储层是 R2 key，展示层统一拼 URL
   return {
     id: r.id,
     ownerId: r.owner_id,

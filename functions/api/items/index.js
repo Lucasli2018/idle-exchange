@@ -74,7 +74,7 @@ export async function onRequestGet({ request, env }) {
     `SELECT * FROM items ${whereSql} ${orderSql} LIMIT ? OFFSET ?`
   ).bind(...binds, limit, offset).all();
 
-  const items = (rows.results || []).map(rowToItem);
+  const items = (rows.results || []).map(r => rowToItem(r, env));
   return json({ items, total, limit, offset });
 }
 

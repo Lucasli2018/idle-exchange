@@ -8,6 +8,7 @@
 // 返回：{ key, url: "/api/files/<key>", size, type }
 
 import { json, fail } from "../_shared/helpers.js";
+import { imageUrls } from "../_shared/items.js";
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
 const ALLOWED = {
@@ -77,7 +78,7 @@ export async function onRequestPost({ request, env }) {
 
   return json({
     key,
-    url: `/api/files/${key}`,
+    url: imageUrls(env, [key])[0],
     size: file.size,
     type: file.type,
   }, 201);

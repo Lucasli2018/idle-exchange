@@ -95,6 +95,8 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
    - D1 数据库：`idle-exchange-db`（变量名 `DB`）
    - R2 桶：`idle-exchange-images`（变量名 `R2`）
 
+4. **（可选）R2 图片直连**：给 `idle-exchange-images` 桶绑定自定义公开域（或开启 r2.dev 开发域），然后在 Pages 项目环境变量里加 `R2_PUBLIC_BASE=https://你的公开域`。配置后图片 URL 直接指向 R2，不再经过 `/api/files` 函数代理；不配置则一切照旧。
+
 > 若未用 `--create`，请先在 Dashboard 手动创建 D1 数据库与 R2 桶，再执行 `node scripts/init-d1.mjs`。
 
 ## API 参考
@@ -133,10 +135,11 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 - [x] 上传频率限制（按 clientId 滑动窗口 12 次/分钟，超限 429）与举报入口（`reports` 表存档）
 - [x] 列表骨架屏（加载占位动画）
 
-### v0.3 · PWA 与成本优化
-- [ ] manifest.json + Service Worker（可安装、离线骨架）
-- [ ] R2 绑定自定义公开域名，图片直连 R2 替代 `/api/files` 代理
-- [ ] SEO 基础（详情页 SSR 化或 prerender、og:image）
+### v0.3 · PWA 与成本优化 ✅（2026-09-20 完成）
+- [x] PWA：manifest + PNG 图标（512/192/180）+ Service Worker（静态 network-first 离线可用、图片 cache-first、其余 API 不接管），可安装到桌面
+- [x] R2 自定义公开域直连：配置 Pages 环境变量 `R2_PUBLIC_BASE`（如绑定了自定义域或开启 r2.dev）即直连 R2；未配置自动回退 `/api/files` 代理
+- [x] SEO 基础：meta description / og 标签 / theme-color（列表页可索引，发布与详情页 noindex，等 SSR 后放开）
+- [ ] 详情页 SSR / prerender（per-item og:image）→ 移至 v0.4+，需要架构调整
 
 ### v0.4 · 账号与互动
 - [ ] 账号体系（微信登录 / 邮箱验证码）替代本地 `clientId`
@@ -152,6 +155,7 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 
 ## 版本历史
 
+- **v0.3.0**（2026-09-20）：PWA（manifest+图标+Service Worker，可安装/离线可用）、R2 公开域直连（`R2_PUBLIC_BASE` 可配置，回退代理）、SEO 基础 meta。
 - **v0.2.0**（2026-09-20）：图片压缩上传、浏览量、收藏（含首页筛选）、举报、上传限流（12 次/分钟）、列表骨架屏。
 - **v0.1.1**（2026-09-20）：新增站点 favicon；修复列表/详情图片不显示（后端统一把 R2 key 拼接为 `/api/files/<key>` 展示 URL）；补充开发路线图。
 - **v0.1.0**（2026-09-20）：MVP 上线——发布 / 分类筛选 / 图片上传（R2）/ 联系发布者 / 标记已出 / 我的发布。

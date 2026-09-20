@@ -27,7 +27,7 @@ export async function onRequestGet({ request, env, params }) {
     favorited = !!fav;
   }
 
-  const item = rowToItem(row);
+  const item = rowToItem(row, env);
   item.views = (row.views || 0) + 1;
   item.favorited = favorited;
   return json(item);

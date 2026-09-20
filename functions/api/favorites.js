@@ -25,5 +25,5 @@ export async function onRequestGet({ request, env }) {
      ORDER BY f.created_at DESC LIMIT ? OFFSET ?`
   ).bind(clientId, limit, offset).all();
 
-  return json({ items: (rows.results || []).map(rowToItem), total, limit, offset });
+  return json({ items: (rows.results || []).map(r => rowToItem(r, env)), total, limit, offset });
 }
