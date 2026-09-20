@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>闲置交换 · 社区二手好物</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>闲置交换</h1>
+      <div class="sub">小区 · 学校 · 公司 二手好物</div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-ghost" id="mineBtn">我的发布</button>
+      <a class="btn btn-primary" href="/post.html">+ 发布</a>
+    </div>
+  </header>
+
+  <section class="filters">
+    <div class="search-row">
+      <input type="text" id="searchInput" placeholder="搜索标题或描述…" />
+      <button class="btn btn-primary" id="searchBtn">搜索</button>
+    </div>
+    <div class="chips" id="typeChips">
+      <span class="chip active" data-type="">全部</span>
+      <span class="chip" data-type="sell">出售</span>
+      <span class="chip" data-type="free">免费送</span>
+      <span class="chip" data-type="exchange">换物</span>
+      <span class="chip" data-type="wanted">求购</span>
+    </div>
+    <div class="row2">
+      <select id="categorySelect">
+        <option value="">全部分类</option>
+      </select>
+      <select id="sortSelect">
+        <option value="newest">最新发布</option>
+        <option value="price_asc">价格低到高</option>
+        <option value="price_desc">价格高到低</option>
+      </select>
+    </div>
+  </section>
+
+  <main class="list" id="list"></main>
+  <div class="more-wrap" id="moreWrap" style="display:none;">
+    <button class="btn" id="moreBtn">加载更多</button>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/home.js"></script>
+</body>
+</html>
