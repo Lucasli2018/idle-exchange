@@ -22,6 +22,8 @@ const TYPES = ["sell", "free", "exchange", "wanted"];
 function rowToItem(r) {
   let images = [];
   try { images = JSON.parse(r.images || "[]"); } catch {}
+  // 存储层是 R2 key，展示层统一拼接代理 URL（前端可直接作为 img src）
+  images = images.map(k => `/api/files/${encodeURIComponent(k)}`);
   return {
     id: r.id,
     ownerId: r.owner_id,
