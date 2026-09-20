@@ -55,8 +55,8 @@ if (!db) {
 const query = sql =>
   api(`/d1/database/${db.uuid}/query`, { method: "POST", body: JSON.stringify({ sql }) });
 
-// 2. 找 / 建 R2 桶
-const buckets = await api("/r2/buckets");
+// 2. 找 / 建 R2 桶（注意返回结构是 { buckets: [...] }）
+const buckets = (await api("/r2/buckets")).buckets || [];
 if (!buckets.find(b => b.name === BUCKET_NAME)) {
   if (!CREATE) { console.error(`未找到 R2 桶 ${BUCKET_NAME}，请先创建或加 --create`); process.exit(1); }
   await api("/r2/buckets", { method: "POST", body: JSON.stringify({ name: BUCKET_NAME }) });

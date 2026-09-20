@@ -12,7 +12,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "idle-exchange-db"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "e7445edc-83fa-4050-bd08-5caf58623f57"
 
 # R2 存储绑定（后端访问 env.R2，存物品图片）
 [[r2_buckets]]
