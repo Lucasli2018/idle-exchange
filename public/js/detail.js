@@ -57,7 +57,7 @@ function render(item) {
       <div class="kv">
         <span class="tag">${escapeHtml(TYPE_LABELS[item.type] || "")}</span>
         <span class="tag">${escapeHtml(item.category)}</span>
-        ${item.community ? `<span class="tag">${escapeHtml(item.community)}</span>` : ""}
+        ${item.community ? `<a class="tag" href="/?community=${encodeURIComponent(item.community)}" style="color:var(--coral-dark);">${escapeHtml(item.community)} ›</a>` : ""}
         <span class="tag">${escapeHtml(formatTime(item.createdAt))}</span>
         <span class="tag">浏览 ${Number(item.views) || 0} 次</span>
       </div>

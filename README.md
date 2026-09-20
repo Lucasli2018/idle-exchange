@@ -121,7 +121,7 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET  | `/api/items` | 列表。参数：`category` `type` `status` `owner` `q` `sort`(newest/price_asc/price_desc) `limit` `offset` |
+| GET  | `/api/items` | 列表。参数：`category` `type` `status` `owner` `community` `q` `sort`(newest/price_asc/price_desc) `limit` `offset` |
 | POST | `/api/items` | 发布。Body(JSON)：`clientId,title,category,type,price?,description?,community?,contactName,contactWechat?,contactPhone?,images[]` |
 | GET  | `/api/items/:id` | 详情 |
 | PATCH| `/api/items/:id` | 改状态。Body：`{clientId, status}`（sold/available/removed），仅发布者 |
@@ -132,9 +132,10 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 | POST | `/api/items/:id/report` | 举报。Body：`{clientId?, reason}` |
 | GET  | `/api/favorites?clientId=` | 我的收藏列表（结构同列表接口） |
 | POST | `/api/items/:id/message` | 给发布者发私信。Body：`{clientId, body}`（自动建会话） |
-| GET  | `/api/threads?clientId=` | 我的会话列表（含对方昵称/物品标题/最后一条） |
+| GET  | `/api/threads?clientId=` | 我的会话列表（含对方昵称/物品标题/最后一条/未读数，顶层 `totalUnread`） |
 | GET  | `/api/threads/:id?clientId=` | 会话消息流（仅参与者） |
 | POST | `/api/threads/:id` | 会话内回复。Body：`{clientId, body}` |
+| GET  | `/api/communities` | 活跃圈子聚合（30 天内在售按 community 计数） |
 | POST | `/api/auth/register` | 注册（绑定 clientId + 昵称 + 口令，昵称占用返回 409） |
 | POST | `/api/auth/login` | 登录（昵称+口令 → client_id，错口令 401） |
 | GET  | `/api/auth/me` | 邮箱登录状态（Cookie 会话 → `{email, boundClientId, boundSelf}`） |
@@ -193,6 +194,7 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 
 ## 版本历史
 
+- **v0.6.1**（2026-09-20）：私信未读数（红点角标+会话清零）、圈子频道（聚合筛选、详情页圈子直达）。
 - **v0.6.0**（2026-09-20）：邮箱登录（Cloudflare Access OTP 方案一，免邮件服务资质；需配置 Access 应用与环境变量后启用）。
 - **v0.5.0**（2026-09-20）：轻量账号（昵称+口令跨设备找回）、物品 30 天新鲜度与一键擦亮、管理后台（/admin，举报处理+下架）。
 - **v0.4.0**（2026-09-20）：站内私信（会话/聊天/轮询）、用户主页；账号体系顺延 v0.5。

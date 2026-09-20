@@ -3,7 +3,7 @@ const api = new ApiClient();
 
 // mode: all 全部 | mine 我的发布 | fav 我的收藏
 const state = {
-  type: "", category: "", q: "", sort: "newest",
+  type: "", category: "", circle: "", q: "", sort: "newest",
   mode: "all", offset: 0, limit: 30, total: 0, loading: false,
 };
 
@@ -13,6 +13,7 @@ function buildQuery() {
   const p = new URLSearchParams();
   if (state.type) p.set("type", state.type);
   if (state.category) p.set("category", state.category);
+  if (state.circle) p.set("community", state.circle);
   if (state.q) p.set("q", state.q);
   if (state.sort) p.set("sort", state.sort);
   if (state.mode === "mine") p.set("owner", getClientId());
@@ -85,6 +86,20 @@ function initFilters() {
     sel.appendChild(o);
   });
 
+  // 圈子下拉（活跃圈子聚合；支持 ?community= 直达）
+  const urlCircle = new URL(location.href).searchParams.get("community");
+  if (urlCircle) state.circle = urlCircle;
+  const circleSel = $("#circleSelect");
+  api.get("/api/communities").then(d => {
+    (d.communities || []).forEach(c => {
+      const o = document.createElement("option");
+      o.value = c.name;
+      o.textContent = `${c.name} (${c.count})`;
+      circleSel.appendChild(o);
+    });
+    if (state.circle) circleSel.value = state.circle;
+  }).catch(() => {});
+
   $("#typeChips").addEventListener("click", e => {
     const chip = e.target.closest(".chip");
     if (!chip) return;
@@ -95,6 +110,7 @@ function initFilters() {
   });
 
   sel.addEventListener("change", () => { state.category = sel.value; load(true); });
+  circleSel.addEventListener("change", () => { state.circle = circleSel.value; load(true); });
   $("#sortSelect").addEventListener("change", e => { state.sort = e.target.value; load(true); });
 
   const doSearch = () => { state.q = $("#searchInput").value.trim(); load(true); };
@@ -123,6 +139,19 @@ function initFilters() {
 initFilters();
 load(true);
 updateAccountSlot();
+fetchUnreadBadge();
+
+// ===== 消息未读角标 =====
+function fetchUnreadBadge() {
+  api.get("/api/threads?clientId=" + encodeURIComponent(getClientId()) + "&limit=1")
+    .then(d => {
+      const n = d.totalUnread || 0;
+      const btn = $("#msgBtn");
+      if (!btn) return;
+      btn.innerHTML = n > 0 ? `消息<span class="unread-dot">${n > 99 ? "99+" : n}</span>` : "消息";
+    })
+    .catch(() => {});
+}
 
 // ===== 账号入口（顶栏）=====
 function updateAccountSlot() {
