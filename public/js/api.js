@@ -46,6 +46,10 @@ class ApiClient {
     }
     if (!res.ok) {
       const msg = (data && data.error) || `请求失败 (${res.status})`;
+      // 未登录兜底：后端判定「请先登录」时统一跳登录页（带回跳地址），防伪造请求
+      if (res.status === 401 && /登录/.test(msg) && !/auth\.html/.test(location.pathname)) {
+        location.href = "/auth.html?redirect=" + encodeURIComponent(location.pathname + location.search);
+      }
       throw new ApiError(msg, res.status, data);
     }
     return data;
@@ -57,7 +61,8 @@ class ApiClient {
   del(path, opts) { return this._request("DELETE", path, opts); }
 }
 
-// ============ 用户身份（无登录，用本地 clientId 标识发布者）============
+// ============ 用户身份（账号密码登录）============
+// 登录后 clientId 切换为账号身份（可跨设备找回）；未登录时本地匿名 id 仅用于浏览
 function getClientId() {
   let id = localStorage.getItem("idle_client_id");
   if (!id) {
@@ -75,6 +80,22 @@ function getProfile() {
 
 function setProfile(profile) {
   localStorage.setItem("idle_profile", JSON.stringify(profile || {}));
+}
+
+// 是否已用账号登录（登录后标记 accounted，退出时清除）
+function isLoggedIn() {
+  const p = getProfile();
+  return !!(p && p.accounted);
+}
+
+// 未登录则跳登录页并带回跳地址；返回是否已登录（true 表示可继续写操作）
+function requireLogin(redirectTo) {
+  if (isLoggedIn()) return true;
+  const target = redirectTo && redirectTo.startsWith("/")
+    ? redirectTo
+    : location.pathname + location.search;
+  location.href = "/auth.html?redirect=" + encodeURIComponent(target);
+  return false;
 }
 
 // ============ Toast ============
@@ -150,8 +171,8 @@ function cardHtml(item) {
 }
 
 // (全局符号：CATEGORIES, TYPE_LABELS, ApiClient, ApiError, getClientId,
-//  getProfile, setProfile, showToast, escapeHtml, formatPrice, formatTime,
-//  typeBadgeClass, cardHtml)
+//  getProfile, setProfile, isLoggedIn, requireLogin, showToast, escapeHtml,
+//  formatPrice, formatTime, typeBadgeClass, cardHtml)
 
 // ============ PWA：Service Worker 注册（仅 https；失败静默）============
 if ("serviceWorker" in navigator && location.protocol === "https:") {

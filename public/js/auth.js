@@ -4,6 +4,12 @@ const $ = sel => document.querySelector(sel);
 
 let mode = "login"; // login | register
 
+// 登录 / 注册 / 绑定成功后的回跳地址（?redirect=/post.html），默认回首页
+function afterLoginHref() {
+  const r = new URL(location.href).searchParams.get("redirect");
+  return r && r.startsWith("/") && !r.startsWith("//") ? r : "/index.html";
+}
+
 // ============ 标签切换（带滑动指示条 + 面板动画）============
 function moveIndicator() {
   const active = mode === "login" ? $("#tabLogin") : $("#tabRegister");
@@ -121,7 +127,7 @@ $("#authForm").addEventListener("submit", async e => {
       const p = getProfile();
       setProfile({ ...p, nickname: res.nickname, accounted: true });
       showToast("登录成功，欢迎回来 " + res.nickname, "success");
-      setTimeout(() => { location.href = "/index.html"; }, 700);
+      setTimeout(() => { location.href = afterLoginHref(); }, 700);
     } catch (err) {
       setLoading(btn, false);
       setErr("fPassL", "errPassL", err.message);
@@ -152,7 +158,7 @@ $("#authForm").addEventListener("submit", async e => {
     });
     setProfile({ nickname: account, community: $("#regCommunity").value.trim() || getProfile().community, accounted: true });
     showToast("注册成功，已自动登录！", "success");
-    setTimeout(() => { location.href = "/index.html"; }, 700);
+    setTimeout(() => { location.href = afterLoginHref(); }, 700);
   } catch (err) {
     setLoading(btn, false);
     if (/占用/.test(err.message)) setErr("fAccountR", "errAccountR", err.message);
@@ -191,7 +197,7 @@ $("#emailBtn").addEventListener("click", () => {
         const p = getProfile();
         setProfile({ ...p, accounted: true });
         showToast("已切换身份", "success");
-        setTimeout(() => { location.href = "/index.html"; }, 700);
+        setTimeout(() => { location.href = afterLoginHref(); }, 700);
       });
       emailStatus.appendChild(b);
     } else {
@@ -205,7 +211,7 @@ $("#emailBtn").addEventListener("click", () => {
           await api.post("/api/auth/bind-email", { clientId });
           setProfile({ ...getProfile(), accounted: true });
           showToast("邮箱绑定成功！", "success");
-          setTimeout(() => { location.href = "/index.html"; }, 700);
+          setTimeout(() => { location.href = afterLoginHref(); }, 700);
         } catch (e) {
           showToast(e.message, "error");
         }

@@ -4,6 +4,9 @@ const uploaded = []; // { key, url }
 
 const $ = sel => document.querySelector(sel);
 
+// 发布需登录：未登录直接跳登录页（带回跳地址）
+requireLogin("/post.html");
+
 // 分类下拉 + 预填档案
 (function init() {
   const sel = $("#category");
@@ -98,6 +101,7 @@ function renderAddSlot() {
 // ===== 提交 =====
 $("#postForm").addEventListener("submit", async e => {
   e.preventDefault();
+  if (!requireLogin("/post.html")) return;
   const type = document.querySelector('input[name=type]:checked').value;
   const title = $("#title").value.trim();
   const category = $("#category").value;

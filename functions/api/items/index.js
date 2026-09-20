@@ -13,7 +13,7 @@
 
 import {
   json, fail, readJson, getString, getNumber,
-  nowMs, validateItemInput,
+  nowMs, validateItemInput, getAccountedUser,
 } from "../../_shared/helpers.js";
 import { rowToItem } from "../../_shared/items.js";
 
@@ -91,17 +91,17 @@ export async function onRequestPost({ request, env }) {
   if (err) return fail(err, 400);
 
   const clientId = getString(body, "clientId");
-  if (!clientId) return fail("缺少 clientId（发布者标识）", 400);
+  const acc = await getAccountedUser(env, clientId);
+  if (!acc) return fail("请先登录后再发布", 401);
 
   const now = nowMs();
 
-  // 同步/补全发布者档案
+  // 账号昵称由注册决定，发布不改昵称（避免空值清空登录账号）；仅补全非空的圈子
   await env.DB.prepare(`
     INSERT INTO users(client_id, nickname, community, created_at)
     VALUES(?, ?, ?, ?)
     ON CONFLICT(client_id) DO UPDATE SET
-      nickname = COALESCE(excluded.nickname, users.nickname),
-      community = COALESCE(excluded.community, users.community)
+      community = COALESCE(NULLIF(excluded.community, ''), users.community)
   `).bind(clientId, getString(body, "nickname"), getString(body, "community"), now).run();
 
   const images = Array.isArray(body.images) ? body.images.filter(Boolean).slice(0, 9) : [];

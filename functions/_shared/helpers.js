@@ -67,3 +67,13 @@ export function validateItemInput(body) {
   }
   return null;
 }
+
+// ============ 登录校验（强制账号登录）============
+// 写操作前，校验该 clientId 已绑定账号（password_hash 非空）。
+// 返回用户行（client_id/nickname/community）或 null（未登录/匿名）。
+export async function getAccountedUser(env, clientId) {
+  if (!clientId || typeof clientId !== "string") return null;
+  return await env.DB.prepare(
+    "SELECT client_id, nickname, community FROM users WHERE client_id = ? AND password_hash IS NOT NULL"
+  ).bind(clientId).first();
+}

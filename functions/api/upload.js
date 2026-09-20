@@ -7,7 +7,7 @@
 //
 // 返回：{ key, url: "/api/files/<key>", size, type }
 
-import { json, fail } from "../_shared/helpers.js";
+import { json, fail, getAccountedUser } from "../_shared/helpers.js";
 import { imageUrls } from "../_shared/items.js";
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -46,7 +46,9 @@ export async function onRequestPost({ request, env }) {
     return fail("表单解析失败", 400);
   }
 
-  const clientId = (form.get("clientId") || "anon").toString().slice(0, 64);
+  const clientId = (form.get("clientId") || "").toString().slice(0, 64);
+  const acc = await getAccountedUser(env, clientId);
+  if (!acc) return fail("请先登录后再上传", 401);
   if (!allowUpload(clientId)) {
     return fail("上传太频繁，请稍后再试", 429);
   }

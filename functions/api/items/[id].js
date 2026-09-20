@@ -2,7 +2,7 @@
 // PATCH  /api/items/:id       标记已出 / 重新上架 / 下架（仅发布者，需 clientId）
 // DELETE /api/items/:id       删除物品（仅发布者，需 ?clientId=）
 
-import { json, fail, readJson, getString, nowMs } from "../../_shared/helpers.js";
+import { json, fail, readJson, getString, nowMs, getAccountedUser } from "../../_shared/helpers.js";
 import { rowToItem } from "../../_shared/items.js";
 
 export async function onRequestGet({ request, env, params }) {
@@ -39,7 +39,8 @@ export async function onRequestPatch({ request, env, params }) {
 
   const body = await readJson(request);
   const clientId = getString(body, "clientId");
-  if (!clientId) return fail("需要发布者身份", 401);
+  const acc = await getAccountedUser(env, clientId);
+  if (!acc) return fail("请先登录后再操作", 401);
 
   const row = await env.DB.prepare("SELECT owner_id FROM items WHERE id = ?").bind(id).first();
   if (!row) return fail("物品不存在", 404);
@@ -72,7 +73,8 @@ export async function onRequestDelete({ request, env, params }) {
   if (!Number.isInteger(id)) return fail("无效的 id", 400);
 
   const clientId = new URL(request.url).searchParams.get("clientId");
-  if (!clientId) return fail("需要发布者身份", 401);
+  const acc = await getAccountedUser(env, clientId);
+  if (!acc) return fail("请先登录后再操作", 401);
 
   const row = await env.DB.prepare("SELECT owner_id FROM items WHERE id = ?").bind(id).first();
   if (!row) return fail("物品不存在", 404);

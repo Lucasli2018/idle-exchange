@@ -1,14 +1,15 @@
 // POST   /api/items/:id/favorite   收藏（Body: {clientId}）
 // DELETE /api/items/:id/favorite   取消收藏（?clientId=）
 
-import { json, fail, readJson, getString, nowMs } from "../../../_shared/helpers.js";
+import { json, fail, readJson, getString, nowMs, getAccountedUser } from "../../../_shared/helpers.js";
 
 export async function onRequestPost({ request, env, params }) {
   const id = Number(params.id);
   if (!Number.isInteger(id)) return fail("无效的 id", 400);
   const body = await readJson(request);
   const clientId = getString(body, "clientId");
-  if (!clientId) return fail("缺少 clientId", 400);
+  const acc = await getAccountedUser(env, clientId);
+  if (!acc) return fail("请先登录后再收藏", 401);
 
   const item = await env.DB.prepare(
     "SELECT id FROM items WHERE id = ? AND status != 'removed'"
@@ -27,7 +28,8 @@ export async function onRequestDelete({ request, env, params }) {
   const id = Number(params.id);
   if (!Number.isInteger(id)) return fail("无效的 id", 400);
   const clientId = new URL(request.url).searchParams.get("clientId");
-  if (!clientId) return fail("缺少 clientId", 400);
+  const acc = await getAccountedUser(env, clientId);
+  if (!acc) return fail("请先登录后再操作", 401);
 
   await env.DB.prepare("DELETE FROM favorites WHERE client_id = ? AND item_id = ?")
     .bind(clientId, id).run();

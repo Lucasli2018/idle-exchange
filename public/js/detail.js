@@ -94,6 +94,7 @@ function render(item) {
 }
 
 async function toggleFavorite(item) {
+  if (!requireLogin("/item.html?id=" + item.id)) return;
   const btn = $("#favBtn");
   btn.disabled = true;
   try {
@@ -118,6 +119,7 @@ async function toggleFavorite(item) {
 }
 
 async function bumpItem(item) {
+  if (!requireLogin("/item.html?id=" + item.id)) return;
   try {
     await api.patch("/api/items/" + item.id, { clientId, action: "bump" });
     showToast("已擦亮，重新进入公共列表 30 天窗口", "success");
@@ -128,6 +130,7 @@ async function bumpItem(item) {
 }
 
 async function sendFirstMessage(item) {
+  if (!requireLogin("/item.html?id=" + item.id)) return;
   const text = prompt(`给「${item.contactName || "发布者"}」发私信：`);
   if (text === null) return;
   if (!text.trim()) return showToast("消息不能为空", "error");
@@ -142,6 +145,7 @@ async function sendFirstMessage(item) {
 }
 
 async function reportItem(item) {
+  if (!requireLogin("/item.html?id=" + item.id)) return;
   const reason = prompt("请填写举报原因（如：虚假信息 / 违禁品 / 已售未标记）：");
   if (reason === null) return;
   if (!reason.trim()) return showToast("请填写举报原因", "error");
@@ -154,6 +158,7 @@ async function reportItem(item) {
 }
 
 async function toggleSold(item, sold) {
+  if (!requireLogin("/item.html?id=" + item.id)) return;
   try {
     await api.patch("/api/items/" + item.id, {
       clientId,
@@ -167,6 +172,7 @@ async function toggleSold(item, sold) {
 }
 
 async function removeItem(item) {
+  if (!requireLogin("/item.html?id=" + item.id)) return;
   if (!confirm("确定删除该物品？删除后不可恢复。")) return;
   try {
     await api.del("/api/items/" + item.id + "?clientId=" + encodeURIComponent(clientId));

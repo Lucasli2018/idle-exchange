@@ -11,8 +11,13 @@ $("#backBtn").addEventListener("click", () => {
   else location.href = "/index.html";
 });
 
-if (convId) openChat(convId);
-else loadThreads();
+// 消息需登录：未登录跳登录页（带回跳）
+requireLogin("/messages.html");
+
+if (isLoggedIn()) {
+  if (convId) openChat(convId);
+  else loadThreads();
+}
 
 // ============ 会话列表 ============
 async function loadThreads() {

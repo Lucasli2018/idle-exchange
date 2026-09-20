@@ -2,7 +2,7 @@
 // Body: {clientId, body}  clientId 为发送方（买家），发布者为 seller
 // 注：不能给自己发；body ≤ 500 字
 
-import { json, fail, readJson, getString, nowMs } from "../../../_shared/helpers.js";
+import { json, fail, readJson, getString, nowMs, getAccountedUser } from "../../../_shared/helpers.js";
 
 const MAX_LEN = 500;
 
@@ -13,7 +13,8 @@ export async function onRequestPost({ request, env, params }) {
   const body = await readJson(request);
   const senderId = getString(body, "clientId");
   const text = getString(body, "body");
-  if (!senderId) return fail("缺少 clientId", 400);
+  const acc = await getAccountedUser(env, senderId);
+  if (!acc) return fail("请先登录后再私信", 401);
   if (!text) return fail("消息不能为空", 400);
   if (text.length > MAX_LEN) return fail(`消息过长（≤${MAX_LEN} 字）`, 400);
 

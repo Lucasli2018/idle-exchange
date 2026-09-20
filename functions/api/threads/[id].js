@@ -2,7 +2,7 @@
 // POST /api/threads/:id             会话内回复 {clientId, body}
 // 返回消息按时间正序，最多 200 条
 
-import { json, fail, readJson, getString, nowMs } from "../../_shared/helpers.js";
+import { json, fail, readJson, getString, nowMs, getAccountedUser } from "../../_shared/helpers.js";
 
 async function requireParticipant(env, convId, clientId) {
   if (!clientId) return { error: "缺少 clientId", status: 400 };
@@ -23,6 +23,8 @@ export async function onRequestGet({ request, env, params }) {
 
   const r = await requireParticipant(env, convId, clientId);
   if (r.error) return fail(r.error, r.status);
+  const acc = await getAccountedUser(env, clientId);
+  if (!acc) return fail("请先登录后再查看会话", 401);
   const conv = r.conv;
 
   // 打开会话即清零我的未读（buyer/seller 各自记录已读时间）
@@ -64,6 +66,8 @@ export async function onRequestPost({ request, env, params }) {
 
   const r = await requireParticipant(env, convId, senderId);
   if (r.error) return fail(r.error, r.status);
+  const acc = await getAccountedUser(env, senderId);
+  if (!acc) return fail("请先登录后再回复", 401);
 
   const now = nowMs();
   await env.DB.prepare(`

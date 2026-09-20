@@ -124,10 +124,19 @@ function initFilters() {
     load(false);
   });
 
-  $("#mineBtn").addEventListener("click", () =>
-    setMode(state.mode === "mine" ? "all" : "mine"));
-  $("#favBtn").addEventListener("click", () =>
-    setMode(state.mode === "fav" ? "all" : "fav"));
+  $("#mineBtn").addEventListener("click", () => {
+    if (state.mode !== "mine" && !requireLogin("/index.html?mode=mine")) return;
+    setMode(state.mode === "mine" ? "all" : "mine");
+  });
+  $("#favBtn").addEventListener("click", () => {
+    if (state.mode !== "fav" && !requireLogin("/index.html?mode=fav")) return;
+    setMode(state.mode === "fav" ? "all" : "fav");
+  });
+
+  // 消息需登录
+  $("#msgBtn").addEventListener("click", e => {
+    if (!requireLogin("/messages.html")) e.preventDefault();
+  });
 
   // 卡片跳转详情
   $("#list").addEventListener("click", e => {
@@ -137,9 +146,12 @@ function initFilters() {
 }
 
 initFilters();
-load(true);
+// 支持 ?mode=mine|fav 直达（登录回跳后落到对应视图）
+const urlMode = new URL(location.href).searchParams.get("mode");
+if (urlMode === "mine" || urlMode === "fav") setMode(urlMode);
+else load(true);
 updateAccountSlot();
-fetchUnreadBadge();
+if (isLoggedIn()) fetchUnreadBadge();
 
 // ===== 消息未读角标 =====
 function fetchUnreadBadge() {
