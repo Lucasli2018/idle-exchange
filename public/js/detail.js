@@ -36,7 +36,7 @@ function render(item) {
   const contact = `
     <div class="contact-box">
       <div class="ttl">联系方式</div>
-      <div class="line"><span>昵称</span><span>${escapeHtml(item.contactName || "—")}</span></div>
+      <div class="line"><span>昵称</span><a href="/user.html?uid=${encodeURIComponent(item.ownerId)}" style="color:var(--coral-dark);font-weight:600;">${escapeHtml(item.contactName || "—")} · 主页</a></div>
       ${item.contactWechat ? `<div class="line"><span>微信</span><span class="copy" data-copy="${escapeHtml(item.contactWechat)}">${escapeHtml(item.contactWechat)} · 复制</span></div>` : ""}
       ${item.contactPhone ? `<div class="line"><span>手机</span><span class="copy" data-copy="${escapeHtml(item.contactPhone)}">${escapeHtml(item.contactPhone)} · 复制</span></div>` : ""}
     </div>`;
@@ -66,6 +66,7 @@ function render(item) {
       <button class="btn ${item.favorited ? "btn-faved" : ""}" id="favBtn">
         ${item.favorited ? "★ 已收藏" : "☆ 收藏"}
       </button>
+      ${isOwner ? "" : `<button class="btn" id="msgBtn">私信发布者</button>`}
       ${ownerActions}
     </div>
     <div class="report-row"><a id="reportLink">举报该物品</a></div>
@@ -78,6 +79,9 @@ function render(item) {
 
   $("#favBtn").addEventListener("click", () => toggleFavorite(item));
   $("#reportLink").addEventListener("click", () => reportItem(item));
+
+  const msgBtn = $("#msgBtn");
+  if (msgBtn) msgBtn.addEventListener("click", () => sendFirstMessage(item));
 
   if (isOwner) {
     $("#toggleSold").addEventListener("click", () => toggleSold(item, sold));
@@ -106,6 +110,20 @@ async function toggleFavorite(item) {
     showToast("操作失败：" + e.message, "error");
   } finally {
     btn.disabled = false;
+  }
+}
+
+async function sendFirstMessage(item) {
+  const text = prompt(`给「${item.contactName || "发布者"}」发私信：`);
+  if (text === null) return;
+  if (!text.trim()) return showToast("消息不能为空", "error");
+  try {
+    await api.post("/api/items/" + item.id + "/message", { clientId, body: text.trim() });
+    if (confirm("私信已发送！对方回复后可在「消息」页查看。现在打开消息页吗？")) {
+      location.href = "/messages.html";
+    }
+  } catch (e) {
+    showToast("发送失败：" + e.message, "error");
   }
 }
 

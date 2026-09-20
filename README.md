@@ -58,6 +58,9 @@ items(id PK, owner_id, title, description, category, type,
       images(JSON), status, views, created_at, updated_at)
 favorites(id PK, client_id, item_id, created_at, UNIQUE(client_id,item_id))
 reports(id PK, item_id, client_id, reason, created_at)
+conversations(id PK, item_id, buyer_id, seller_id, created_at, last_at,
+              UNIQUE(item_id,buyer_id))
+messages(id PK, conv_id, sender_id, body, created_at)
 -- category ∈ {数码,家居,图书,服饰,母婴,运动,美食,其他}
 -- type      ∈ {sell, free, exchange, wanted}
 -- status    ∈ {available, sold, removed}
@@ -114,6 +117,10 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 | DELETE| `/api/items/:id/favorite?clientId=` | 取消收藏 |
 | POST | `/api/items/:id/report` | 举报。Body：`{clientId?, reason}` |
 | GET  | `/api/favorites?clientId=` | 我的收藏列表（结构同列表接口） |
+| POST | `/api/items/:id/message` | 给发布者发私信。Body：`{clientId, body}`（自动建会话） |
+| GET  | `/api/threads?clientId=` | 我的会话列表（含对方昵称/物品标题/最后一条） |
+| GET  | `/api/threads/:id?clientId=` | 会话消息流（仅参与者） |
+| POST | `/api/threads/:id` | 会话内回复。Body：`{clientId, body}` |
 | POST | `/api/upload` | 上传图片（multipart `file` + `clientId`），限流 12 次/分钟，返回 `{key,url}` |
 | GET  | `/api/files/:key` | 读取图片（公开） |
 
@@ -142,10 +149,11 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 - [x] SEO 基础：meta description / og 标签 / theme-color（列表页可索引，发布与详情页 noindex，等 SSR 后放开）
 - [ ] 详情页 SSR / prerender（per-item og:image）→ 移至 v0.4+，需要架构调整
 
-### v0.4 · 账号与互动
-- [ ] 账号体系（微信登录 / 邮箱验证码）替代本地 `clientId`
-- [ ] 站内私信（会话表 + 轮询或 Durable Objects）
-- [ ] 用户主页（查看某人发布 / 在售）
+### v0.4 · 账号与互动（2026-09-20 部分完成）
+- [x] 站内私信：详情页「私信发布者」→ 会话（买家×物品唯一）→ 消息页会话列表/聊天视图（15s 轮询），参与者校验
+- [x] 用户主页：详情页点发布者昵称查看 TA 的所有发布与在售数
+- [ ] 账号体系（微信登录 / 邮箱验证码）→ 顺延 v0.5（依赖外部服务/资质，需配置 Resend 或微信开放平台）
+- [ ] 私信未读数 / 推送提醒（依赖账号与订阅消息）
 
 ### v0.5 · 运营与多社区
 - [ ] Cron Worker 定时下架超期物品 + 冷数据归档
@@ -156,6 +164,7 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 
 ## 版本历史
 
+- **v0.4.0**（2026-09-20）：站内私信（会话/聊天/轮询）、用户主页；账号体系顺延 v0.5。
 - **v0.3.0**（2026-09-20）：PWA（manifest+图标+Service Worker，可安装/离线可用）、R2 公开域直连（`R2_PUBLIC_BASE` 可配置，回退代理）、SEO 基础 meta。
 - **v0.2.0**（2026-09-20）：图片压缩上传、浏览量、收藏（含首页筛选）、举报、上传限流（12 次/分钟）、列表骨架屏。
 - **v0.1.1**（2026-09-20）：新增站点 favicon；修复列表/详情图片不显示（后端统一把 R2 key 拼接为 `/api/files/<key>` 展示 URL）；补充开发路线图。

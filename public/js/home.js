@@ -21,29 +21,6 @@ function buildQuery() {
   return p.toString();
 }
 
-function cardHtml(item) {
-  const first = item.images && item.images.length ? item.images[0] : null;
-  const thumb = first
-    ? `<img src="${escapeHtml(first)}" loading="lazy" onerror="this.style.display='none'">`
-    : `📦<br>暂无图片`;
-  return `
-    <div class="card" data-id="${item.id}">
-      <div class="thumb">
-        ${thumb}
-        <span class="badge ${typeBadgeClass(item.type)} badge-float">${TYPE_LABELS[item.type] || ""}</span>
-        ${item.status === "sold" ? `<span class="badge badge-sold status-float">已出</span>` : ""}
-      </div>
-      <div class="body">
-        <p class="title">${escapeHtml(item.title)}</p>
-        <div class="price">${escapeHtml(formatPrice(item))}</div>
-        <div class="meta">
-          <span>${escapeHtml(item.community || "—")}</span>
-          <span>${escapeHtml(formatTime(item.createdAt))}</span>
-        </div>
-      </div>
-    </div>`;
-}
-
 const SKELETONS = `<div class="card skel"><div class="thumb"></div><div class="body">
   <div class="sk-line w80"></div><div class="sk-line w40"></div><div class="sk-line w60"></div>
 </div></div>`.repeat(6);

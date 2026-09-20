@@ -122,8 +122,33 @@ function typeBadgeClass(type) {
   return "badge badge-" + type;
 }
 
+// ============ 物品卡片（首页 / 用户主页共用）============
+function cardHtml(item) {
+  const first = item.images && item.images.length ? item.images[0] : null;
+  const thumb = first
+    ? `<img src="${escapeHtml(first)}" loading="lazy" onerror="this.style.display='none'">`
+    : `📦<br>暂无图片`;
+  return `
+    <div class="card" data-id="${item.id}">
+      <div class="thumb">
+        ${thumb}
+        <span class="badge ${typeBadgeClass(item.type)} badge-float">${TYPE_LABELS[item.type] || ""}</span>
+        ${item.status === "sold" ? `<span class="badge badge-sold status-float">已出</span>` : ""}
+      </div>
+      <div class="body">
+        <p class="title">${escapeHtml(item.title)}</p>
+        <div class="price">${escapeHtml(formatPrice(item))}</div>
+        <div class="meta">
+          <span>${escapeHtml(item.community || "—")}</span>
+          <span>${escapeHtml(formatTime(item.createdAt))}</span>
+        </div>
+      </div>
+    </div>`;
+}
+
 // (全局符号：CATEGORIES, TYPE_LABELS, ApiClient, ApiError, getClientId,
-//  getProfile, setProfile, showToast, escapeHtml, formatPrice, formatTime, typeBadgeClass)
+//  getProfile, setProfile, showToast, escapeHtml, formatPrice, formatTime,
+//  typeBadgeClass, cardHtml)
 
 // ============ PWA：Service Worker 注册（仅 https；失败静默）============
 if ("serviceWorker" in navigator && location.protocol === "https:") {

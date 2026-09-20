@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>消息 · 闲置交换</title>
+  <meta name="theme-color" content="#FF7A45">
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-180.png">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="back-link" id="backBtn" style="color:#fff;padding:0;">‹ 返回</a>
+    <h1 style="font-size:16px;" id="pageTitle">消息</h1>
+    <div style="width:48px;"></div>
+  </header>
+
+  <!-- 会话列表视图 -->
+  <main id="threadView">
+    <div id="threadList" class="thread-list"></div>
+  </main>
+
+  <!-- 聊天视图 -->
+  <main id="chatView" style="display:none;">
+    <div class="chat-head" id="chatHead"></div>
+    <div id="msgList" class="msg-list"></div>
+    <div class="chat-input">
+      <input type="text" id="msgInput" maxlength="500" placeholder="输入消息…" />
+      <button class="btn btn-primary" id="sendBtn">发送</button>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/messages.js"></script>
+</body>
+</html>
