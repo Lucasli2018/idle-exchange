@@ -42,7 +42,9 @@ export async function onRequestGet({ request, env }) {
     where.push("status = ?");
     binds.push(status);
   } else {
-    where.push("status = 'available'");
+    // 公共列表：仅展示 30 天内发布的 available（超期物品由发布者「擦亮」重新上架）
+    where.push("status = 'available'", "created_at > ?");
+    binds.push(nowMs() - 30 * 86400 * 1000);
   }
 
   if (category && CATEGORIES.includes(category)) {

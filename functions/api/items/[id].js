@@ -41,18 +41,28 @@ export async function onRequestPatch({ request, env, params }) {
   const clientId = getString(body, "clientId");
   if (!clientId) return fail("需要发布者身份", 401);
 
+  const row = await env.DB.prepare("SELECT owner_id FROM items WHERE id = ?").bind(id).first();
+  if (!row) return fail("物品不存在", 404);
+  if (row.owner_id !== clientId) return fail("无权操作此物品", 403);
+
+  const now = nowMs();
+
+  // 擦亮（重新发布置顶）：仅 available 物品，刷新 created_at 挤进公共列表 30 天窗口
+  if (body.action === "bump") {
+    await env.DB.prepare(
+      "UPDATE items SET created_at = ?, updated_at = ?, status = 'available' WHERE id = ?"
+    ).bind(now, now, id).run();
+    return json({ ok: true, action: "bump" });
+  }
+
   const status = body.status;
   if (!["sold", "available", "removed"].includes(status)) {
     return fail("状态不合法", 400);
   }
 
-  const row = await env.DB.prepare("SELECT owner_id FROM items WHERE id = ?").bind(id).first();
-  if (!row) return fail("物品不存在", 404);
-  if (row.owner_id !== clientId) return fail("无权操作此物品", 403);
-
   await env.DB.prepare(
     "UPDATE items SET status = ?, updated_at = ? WHERE id = ?"
-  ).bind(status, nowMs(), id).run();
+  ).bind(status, now, id).run();
 
   return json({ ok: true, status });
 }
