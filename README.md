@@ -136,8 +136,9 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 | GET  | `/api/threads/:id?clientId=` | 会话消息流（仅参与者） |
 | POST | `/api/threads/:id` | 会话内回复。Body：`{clientId, body}` |
 | GET  | `/api/communities` | 活跃圈子聚合（30 天内在售按 community 计数） |
-| POST | `/api/auth/register` | 注册（绑定 clientId + 昵称 + 口令，昵称占用返回 409） |
-| POST | `/api/auth/login` | 登录（昵称+口令 → client_id，错口令 401） |
+| POST | `/api/auth/register` | 注册（绑定 clientId + 账号 + 密码，账号占用返回 409） |
+| POST | `/api/auth/login` | 登录（账号+密码 → client_id，账号或密码错误统一 401） |
+| GET  | `/api/auth/available?nickname=` | 注册时实时校验账号是否可用（已设密码的注册账号才算占用） |
 | GET  | `/api/auth/me` | 邮箱登录状态（Cookie 会话 → `{email, boundClientId, boundSelf}`） |
 | POST | `/api/auth/bind-email` | 邮箱绑定到当前设备账号（需邮箱会话，重复绑定 409） |
 | GET  | `/api/access-login` | Cloudflare Access OTP 回跳点（建会话 Cookie → 回 `/auth.html?access=1`） |
@@ -146,7 +147,7 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 | POST | `/api/upload` | 上传图片（multipart `file` + `clientId`），限流 12 次/分钟，返回 `{key,url}` |
 | GET  | `/api/files/:key` | 读取图片（公开） |
 
-> **身份说明**：本 MVP 不做账号系统。发布者身份用一个本地生成的 `clientId`（存浏览器 `localStorage`）标识，用于「我的发布」与「标记已出 / 删除」的归属校验。同一浏览器即为同一发布者。
+> **身份说明**：本平台用轻量账号（账号 + 密码，昵称即登录账号）识别用户；底层归属校验仍基于本地生成的 `clientId`（存浏览器 `localStorage`）。登录会把本地 `clientId` 切换为该账号的身份，使发布 / 收藏 / 会话跨设备找回；同一浏览器未登录时为匿名发布者。
 
 ## 安全与限制
 
@@ -178,7 +179,7 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 - [ ] 私信未读数 / 推送提醒（依赖账号与订阅消息）
 
 ### v0.5 · 账号与运营 ✅（2026-09-20 完成）
-- [x] 轻量账号：昵称 + 口令（PBKDF2-SHA256 10万轮），注册即绑定当前设备身份，任何设备可登录找回物品/收藏/会话；微信/邮箱登录待外部资质，列 v0.6
+- [x] 轻量账号：账号 + 密码（昵称即登录账号，PBKDF2-SHA256 10万轮），注册即绑定当前设备身份，任何设备可登录找回物品/收藏/会话；微信/邮箱登录待外部资质，列 v0.6
 - [x] 物品新鲜度：公共列表仅展示 30 天内发布；发布者可一键「擦亮」重新进入窗口（替代 Cron 定时下架，零新增部署）
 - [x] 管理后台（`/admin`）：`ADMIN_KEY` 口令守卫、统计概览、举报处理、物品下架/恢复
 - [ ] 多社区 / 多圈子支持（按 `community` 聚合频道页）→ v0.6
@@ -196,7 +197,7 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 
 - **v0.6.1**（2026-09-20）：私信未读数（红点角标+会话清零）、圈子频道（聚合筛选、详情页圈子直达）。
 - **v0.6.0**（2026-09-20）：邮箱登录（Cloudflare Access OTP 方案一，免邮件服务资质；需配置 Access 应用与环境变量后启用）。
-- **v0.5.0**（2026-09-20）：轻量账号（昵称+口令跨设备找回）、物品 30 天新鲜度与一键擦亮、管理后台（/admin，举报处理+下架）。
+- **v0.5.0**（2026-09-20）：轻量账号（账号+密码跨设备找回）、物品 30 天新鲜度与一键擦亮、管理后台（/admin，举报处理+下架）。
 - **v0.4.0**（2026-09-20）：站内私信（会话/聊天/轮询）、用户主页；账号体系顺延 v0.5。
 - **v0.3.0**（2026-09-20）：PWA（manifest+图标+Service Worker，可安装/离线可用）、R2 公开域直连（`R2_PUBLIC_BASE` 可配置，回退代理）、SEO 基础 meta。
 - **v0.2.0**（2026-09-20）：图片压缩上传、浏览量、收藏（含首页筛选）、举报、上传限流（12 次/分钟）、列表骨架屏。

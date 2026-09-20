@@ -153,21 +153,24 @@ function fetchUnreadBadge() {
     .catch(() => {});
 }
 
-// ===== 账号入口（顶栏）=====
+// ===== 账号入口（顶栏 + 首页 CTA）=====
 function updateAccountSlot() {
   const p = getProfile();
   const el = $("#accountSlot");
+  const cta = $("#ctaBanner");
   if (!el) return;
   if (p.accounted && p.nickname) {
-    el.innerHTML = `${escapeHtml(p.nickname)} · <a id="logoutLink">退出</a>`;
+    el.innerHTML = `${escapeHtml(p.nickname)} · <a id="logoutLink" class="login-pill">退出</a>`;
     el.querySelector("#logoutLink").addEventListener("click", () => {
-      if (!confirm("退出将切换到新的匿名身份；原账号随时可用昵称+口令登录找回。确定退出？")) return;
+      if (!confirm("退出将切换到新的匿名身份；原账号随时可用账号 + 密码登录找回。确定退出？")) return;
       localStorage.removeItem("idle_client_id");
       setProfile({});
       getClientId();
       location.reload();
     });
+    if (cta) cta.hidden = true;
   } else {
-    el.innerHTML = `<a href="/auth.html">登录/注册</a>`;
+    el.innerHTML = `<a class="login-pill" href="/auth.html">登录 / 注册</a>`;
+    if (cta) cta.hidden = false;
   }
 }

@@ -349,3 +349,111 @@ a { color: inherit; text-decoration: none; }
 .report-title { font-weight: 600; font-size: 14px; }
 .report-reason { font-size: 13px; color: #444; margin: 3px 0; word-break: break-word; }
 .report-time { font-size: 11px; color: var(--muted); }
+
+/* ===== 认证页（账号 + 密码 登录 / 注册） ===== */
+.auth-wrap { max-width: 440px; margin: 0 auto; padding: 22px 16px 60px; }
+.auth-head { text-align: center; margin-bottom: 18px; }
+.auth-logo {
+  width: 64px; height: 64px; border-radius: 18px; margin: 0 auto 10px;
+  background: linear-gradient(135deg, var(--coral), var(--coral-dark));
+  color: #fff; font-size: 32px; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow);
+}
+.auth-head h2 { margin: 0 0 4px; font-size: 20px; }
+.auth-tag { color: var(--muted); font-size: 13px; margin: 0; }
+
+.auth-card {
+  background: var(--card); border-radius: 18px; padding: 16px;
+  box-shadow: 0 8px 30px rgba(255, 122, 69, 0.12);
+}
+/* 大号分段标签 */
+.auth-tabs {
+  position: relative; display: flex; background: var(--bg);
+  border-radius: 999px; padding: 4px; margin-bottom: 18px;
+}
+.auth-tab {
+  flex: 1; border: none; background: transparent; cursor: pointer;
+  padding: 10px 0; font-size: 15px; font-weight: 700; color: var(--muted);
+  border-radius: 999px; position: relative; z-index: 2; transition: color .2s ease;
+}
+.auth-tab.active { color: #fff; }
+.auth-tab-ind {
+  position: absolute; top: 4px; bottom: 4px; left: 4px; width: 50%;
+  background: linear-gradient(135deg, var(--coral), var(--coral-dark));
+  border-radius: 999px; z-index: 1; transition: transform .25s cubic-bezier(.4,0,.2,1), width .2s ease;
+  box-shadow: 0 4px 12px rgba(242, 92, 31, .35);
+}
+/* 面板切换动画 */
+.auth-panel { animation: fadeUp .25s ease; }
+.auth-panel[hidden] { display: none; }
+.auth-panel.in { animation: fadeUp .28s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* 行内错误 */
+.field .field-err { color: #e74c3c; font-size: 12px; margin-top: 5px; min-height: 14px; }
+.field.error input { border-color: #e74c3c !important; }
+
+/* 密码框 + 可见切换 */
+.pw-wrap { position: relative; }
+.pw-wrap input {
+  width: 100%; border: 1px solid var(--line); border-radius: 10px;
+  padding: 11px 42px 11px 12px; font-size: 14px; background: var(--card);
+  outline: none; font-family: inherit;
+}
+.pw-wrap input:focus { border-color: var(--coral); }
+.pw-toggle {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  border: none; background: transparent; cursor: pointer; font-size: 16px;
+  padding: 6px; color: var(--muted); line-height: 1;
+}
+.pw-toggle:active { transform: translateY(-50%) scale(.9); }
+
+/* 密码强度条 */
+.pw-strength { display: flex; gap: 5px; margin-top: 8px; }
+.pw-strength span { flex: 1; height: 4px; border-radius: 4px; background: var(--line); transition: background .2s ease; }
+.pw-strength.s1 span:nth-child(1) { background: #e74c3c; }
+.pw-strength.s2 span:nth-child(-n+2) { background: #e67e22; }
+.pw-strength.s3 span:nth-child(-n+3) { background: #f1c40f; }
+.pw-strength.s4 span:nth-child(-n+4) { background: var(--green); }
+
+/* 次要入口：邮箱验证码 */
+.auth-foot { margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--line); }
+.auth-divider { text-align: center; color: var(--muted); font-size: 12px; margin-bottom: 12px; position: relative; }
+.auth-divider span { background: var(--card); padding: 0 10px; position: relative; z-index: 1; }
+.auth-divider::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--line); }
+.btn-ghost-block {
+  width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--text); font-weight: 600; font-size: 14px; cursor: pointer;
+}
+.btn-ghost-block:active { transform: scale(.98); }
+
+/* 按钮加载态 */
+.btn .spinner {
+  display: inline-block; width: 14px; height: 14px; margin-right: 6px;
+  border: 2px solid rgba(255, 255, 255, .5); border-top-color: #fff; border-radius: 50%;
+  vertical-align: -2px; animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== 首页登录 CTA 横幅 ===== */
+.cta-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin: 12px 14px 0; padding: 14px 16px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--coral), var(--coral-dark)); color: #fff;
+  box-shadow: 0 6px 18px rgba(242, 92, 31, .28);
+  animation: fadeUp .3s ease;
+}
+.cta-title { font-weight: 700; font-size: 14px; }
+.cta-sub { font-size: 12px; opacity: .9; margin-top: 3px; }
+.cta-banner .btn-light {
+  background: #fff; color: var(--coral-dark); border-radius: 999px;
+  padding: 9px 16px; font-weight: 700; white-space: nowrap; cursor: pointer;
+}
+
+/* 顶栏登录胶囊 */
+.login-pill {
+  color: #fff !important; background: rgba(255, 255, 255, .22);
+  border-radius: 999px; padding: 3px 10px; font-weight: 700;
+  text-decoration: none !important;
+}
+.login-pill:active { background: rgba(255, 255, 255, .34); }

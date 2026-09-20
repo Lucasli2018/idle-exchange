@@ -1,6 +1,6 @@
-// POST /api/auth/register   注册（绑定当前 clientId + 设置昵称/口令）
+// POST /api/auth/register   注册（绑定当前 clientId + 设置账号/密码）
 // Body: {clientId, nickname, password, community?}
-// 规则：昵称 1-20 字且未被注册账号占用（409）；口令 ≥ 6 位
+// 规则：账号（昵称）2-20 字且未被注册账号占用（409）；密码 ≥ 6 位
 // 注册成功后该 clientId 名下物品的联系昵称同步更新
 
 import { json, fail, readJson, getString } from "../../_shared/helpers.js";
@@ -13,14 +13,14 @@ export async function onRequestPost({ request, env }) {
   const nickname = getString(body, "nickname");
   const password = typeof body?.password === "string" ? body.password : "";
   if (!clientId) return fail("缺少 clientId", 400);
-  if (!nickname || nickname.length > 20) return fail("昵称需 1-20 字", 400);
-  if (password.length < 6) return fail("口令至少 6 位", 400);
+  if (!nickname || nickname.length < 2 || nickname.length > 20) return fail("账号需 2-20 字", 400);
+  if (password.length < 6) return fail("密码至少 6 位", 400);
 
-  // 昵称是否已被注册账号占用
+  // 账号（昵称）是否已被注册账号占用
   const taken = await env.DB.prepare(
     "SELECT 1 FROM users WHERE nickname = ? AND password_hash IS NOT NULL AND client_id != ?"
   ).bind(nickname, clientId).first();
-  if (taken) return fail("该昵称已被占用", 409);
+  if (taken) return fail("该账号已被占用", 409);
 
   const salt = randomSalt();
   const hash = await hashPassword(password, salt);
