@@ -236,3 +236,19 @@ a { color: inherit; text-decoration: none; }
 .toast.success { background: var(--green); }
 
 .back-link { display: inline-flex; align-items: center; gap: 4px; padding: 12px 16px; color: var(--coral-dark); font-weight: 600; cursor: pointer; }
+
+/* ===== 骨架屏 ===== */
+.card.skel .thumb { background: linear-gradient(100deg, #ffe6d6 30%, #fff4ec 50%, #ffe6d6 70%); background-size: 200% 100%; animation: sk 1.2s infinite; }
+.sk-line { height: 12px; border-radius: 6px; margin: 8px 0 0; background: linear-gradient(100deg, #f3e7df 30%, #faf3ee 50%, #f3e7df 70%); background-size: 200% 100%; animation: sk 1.2s infinite; }
+.sk-line.w80 { width: 80%; } .sk-line.w40 { width: 40%; } .sk-line.w60 { width: 60%; }
+@keyframes sk { to { background-position: -200% 0; } }
+
+/* ===== 详情动作区 ===== */
+.action-bar {
+  padding: 0 16px 8px;
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+}
+.btn-faved { background: var(--coral-soft); color: var(--coral-dark); border: 1px solid var(--coral); }
+.report-row { text-align: right; padding: 0 16px 24px; }
+.report-row a { color: var(--muted); font-size: 12px; cursor: pointer; text-decoration: underline; }
+.report-row a:hover { color: #e74c3c; }

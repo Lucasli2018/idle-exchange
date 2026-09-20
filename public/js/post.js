@@ -28,6 +28,29 @@ $("#priceField").style.display = "block";
 const fileInput = $("#fileInput");
 $("#addSlot").addEventListener("click", () => fileInput.click());
 
+// ===== 图片压缩（上传前 canvas 缩图，省流量）=====
+const MAX_SIDE = 1600;   // 最大边长
+const JPEG_Q = 0.85;     // 压缩质量
+const SKIP_BELOW = 800 * 1024; // 小于 800KB 且尺寸不超标时原图直传
+
+async function compressImage(file) {
+  if (!/^image\/(jpeg|png|webp)$/.test(file.type)) return file; // 其它类型原样传（由后端校验）
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, MAX_SIDE / Math.max(bmp.width, bmp.height));
+    if (scale >= 1 && file.size < SKIP_BELOW) return file;
+    const c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(bmp.width * scale));
+    c.height = Math.max(1, Math.round(bmp.height * scale));
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise(r => c.toBlob(r, "image/jpeg", JPEG_Q));
+    if (!blob || blob.size >= file.size) return file; // 压不下去就用原图
+    return new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" });
+  } catch {
+    return file; // 解码失败兜底原样传
+  }
+}
+
 fileInput.addEventListener("change", async () => {
   const files = Array.from(fileInput.files || []);
   fileInput.value = "";
@@ -35,8 +58,10 @@ fileInput.addEventListener("change", async () => {
     if (uploaded.length >= 9) { showToast("最多 9 张图片", "error"); break; }
     const slot = addUploadingSlot();
     try {
+      const out = await compressImage(file);
       const form = new FormData();
-      form.append("file", file);
+      form.append("file", out);
+      form.append("clientId", getClientId());
       const res = await api.post("/api/upload", form);
       uploaded.push({ key: res.key, url: res.url });
       replaceSlotWithImage(slot, res.url);

@@ -12,7 +12,8 @@ if (!id) {
 
 async function load() {
   try {
-    const item = await api.get("/api/items/" + encodeURIComponent(id));
+    const item = await api.get("/api/items/" + encodeURIComponent(id) +
+      "?clientId=" + encodeURIComponent(clientId));
     render(item);
   } catch (e) {
     $("#detail").innerHTML = `<div class="empty">加载失败：${escapeHtml(e.message)}</div>`;
@@ -41,10 +42,9 @@ function render(item) {
     </div>`;
 
   const ownerActions = isOwner ? `
-    <div style="padding:0 16px 20px;display:flex;gap:10px;">
       <button class="btn ${sold ? "" : "btn-primary"}" id="toggleSold">${sold ? "重新上架" : "标记已出"}</button>
       <button class="btn" id="deleteBtn" style="color:#e74c3c;">删除</button>
-    </div>` : "";
+  ` : "";
 
   $("#detail").innerHTML = `
     ${galleryHtml(item)}
@@ -57,11 +57,18 @@ function render(item) {
         <span class="tag">${escapeHtml(item.category)}</span>
         ${item.community ? `<span class="tag">${escapeHtml(item.community)}</span>` : ""}
         <span class="tag">${escapeHtml(formatTime(item.createdAt))}</span>
+        <span class="tag">浏览 ${Number(item.views) || 0} 次</span>
       </div>
       ${item.description ? `<div class="desc">${escapeHtml(item.description)}</div>` : ""}
     </div>
     ${contact}
-    ${ownerActions}
+    <div class="action-bar">
+      <button class="btn ${item.favorited ? "btn-faved" : ""}" id="favBtn">
+        ${item.favorited ? "★ 已收藏" : "☆ 收藏"}
+      </button>
+      ${ownerActions}
+    </div>
+    <div class="report-row"><a id="reportLink">举报该物品</a></div>
   `;
 
   // 复制联系方式
@@ -69,9 +76,48 @@ function render(item) {
     el.addEventListener("click", () => copyText(el.dataset.copy));
   });
 
+  $("#favBtn").addEventListener("click", () => toggleFavorite(item));
+  $("#reportLink").addEventListener("click", () => reportItem(item));
+
   if (isOwner) {
     $("#toggleSold").addEventListener("click", () => toggleSold(item, sold));
     $("#deleteBtn").addEventListener("click", () => removeItem(item));
+  }
+}
+
+async function toggleFavorite(item) {
+  const btn = $("#favBtn");
+  btn.disabled = true;
+  try {
+    if (item.favorited) {
+      await api.del("/api/items/" + item.id + "/favorite?clientId=" + encodeURIComponent(clientId));
+      item.favorited = false;
+      btn.classList.remove("btn-faved");
+      btn.textContent = "☆ 收藏";
+      showToast("已取消收藏", "success");
+    } else {
+      await api.post("/api/items/" + item.id + "/favorite", { clientId });
+      item.favorited = true;
+      btn.classList.add("btn-faved");
+      btn.textContent = "★ 已收藏";
+      showToast("已收藏，可在首页「收藏」中查看", "success");
+    }
+  } catch (e) {
+    showToast("操作失败：" + e.message, "error");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function reportItem(item) {
+  const reason = prompt("请填写举报原因（如：虚假信息 / 违禁品 / 已售未标记）：");
+  if (reason === null) return;
+  if (!reason.trim()) return showToast("请填写举报原因", "error");
+  try {
+    await api.post("/api/items/" + item.id + "/report", { clientId, reason: reason.trim() });
+    showToast("举报已提交，感谢反馈", "success");
+  } catch (e) {
+    showToast("举报失败：" + e.message, "error");
   }
 }
 
