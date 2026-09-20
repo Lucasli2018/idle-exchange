@@ -123,11 +123,14 @@ function typeBadgeClass(type) {
 }
 
 // ============ 物品卡片（首页 / 用户主页共用）============
+const EXPIRE_MS = 30 * 86400 * 1000; // 公共列表新鲜度窗口，与后端一致
+
 function cardHtml(item) {
   const first = item.images && item.images.length ? item.images[0] : null;
   const thumb = first
     ? `<img src="${escapeHtml(first)}" loading="lazy" onerror="this.style.display='none'">`
     : `📦<br>暂无图片`;
+  const expired = item.status === "available" && Date.now() - item.createdAt > EXPIRE_MS;
   return `
     <div class="card" data-id="${item.id}">
       <div class="thumb">
@@ -139,7 +142,7 @@ function cardHtml(item) {
         <p class="title">${escapeHtml(item.title)}</p>
         <div class="price">${escapeHtml(formatPrice(item))}</div>
         <div class="meta">
-          <span>${escapeHtml(item.community || "—")}</span>
+          <span>${expired ? "⌛已过期 · " : ""}${escapeHtml(item.community || "—")}</span>
           <span>${escapeHtml(formatTime(item.createdAt))}</span>
         </div>
       </div>

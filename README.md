@@ -100,6 +100,11 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
    - R2 桶：`idle-exchange-images`（变量名 `R2`）
 
 4. **（可选）R2 图片直连**：给 `idle-exchange-images` 桶绑定自定义公开域（或开启 r2.dev 开发域），然后在 Pages 项目环境变量里加 `R2_PUBLIC_BASE=https://你的公开域`。配置后图片 URL 直接指向 R2，不再经过 `/api/files` 函数代理；不配置则一切照旧。
+5. **（可选）管理后台**：设置管理口令后访问 `/admin`
+   ```bash
+   wrangler pages secret put ADMIN_KEY --project-name=idle-exchange
+   ```
+   未配置时管理接口返回 503（功能停用，不影响前台）。
 
 > 若未用 `--create`，请先在 Dashboard 手动创建 D1 数据库与 R2 桶，再执行 `node scripts/init-d1.mjs`。
 
@@ -121,6 +126,10 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 | GET  | `/api/threads?clientId=` | 我的会话列表（含对方昵称/物品标题/最后一条） |
 | GET  | `/api/threads/:id?clientId=` | 会话消息流（仅参与者） |
 | POST | `/api/threads/:id` | 会话内回复。Body：`{clientId, body}` |
+| POST | `/api/auth/register` | 注册（绑定 clientId + 昵称 + 口令，昵称占用返回 409） |
+| POST | `/api/auth/login` | 登录（昵称+口令 → client_id，错口令 401） |
+| GET  | `/api/admin/overview` | 管理概览（统计 + 举报列表）。Header：`X-Admin-Key` |
+| POST | `/api/admin/items/:id` | 管理下架/恢复。Body：`{action: remove\|restore}` |
 | POST | `/api/upload` | 上传图片（multipart `file` + `clientId`），限流 12 次/分钟，返回 `{key,url}` |
 | GET  | `/api/files/:key` | 读取图片（公开） |
 
@@ -155,15 +164,23 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 - [ ] 账号体系（微信登录 / 邮箱验证码）→ 顺延 v0.5（依赖外部服务/资质，需配置 Resend 或微信开放平台）
 - [ ] 私信未读数 / 推送提醒（依赖账号与订阅消息）
 
-### v0.5 · 运营与多社区
-- [ ] Cron Worker 定时下架超期物品 + 冷数据归档
-- [ ] 管理后台（违规处理、数据看板）
-- [ ] 多社区 / 多圈子支持（按 `community` 聚合频道页）
+### v0.5 · 账号与运营 ✅（2026-09-20 完成）
+- [x] 轻量账号：昵称 + 口令（PBKDF2-SHA256 10万轮），注册即绑定当前设备身份，任何设备可登录找回物品/收藏/会话；微信/邮箱登录待外部资质，列 v0.6
+- [x] 物品新鲜度：公共列表仅展示 30 天内发布；发布者可一键「擦亮」重新进入窗口（替代 Cron 定时下架，零新增部署）
+- [x] 管理后台（`/admin`）：`ADMIN_KEY` 口令守卫、统计概览、举报处理、物品下架/恢复
+- [ ] 多社区 / 多圈子支持（按 `community` 聚合频道页）→ v0.6
+
+### v0.6 · 规划中
+- [ ] 微信 / 邮箱真实登录（依赖开放平台资质或 Resend 配置）
+- [ ] 私信未读数与推送提醒
+- [ ] 多圈子频道页
+- [ ] Cron Worker 冷数据归档（如仍需要）
 
 > 版本遵循语义化：补丁位 `0.0.x` 日常迭代，次版本位 `0.x.0` 大功能。
 
 ## 版本历史
 
+- **v0.5.0**（2026-09-20）：轻量账号（昵称+口令跨设备找回）、物品 30 天新鲜度与一键擦亮、管理后台（/admin，举报处理+下架）。
 - **v0.4.0**（2026-09-20）：站内私信（会话/聊天/轮询）、用户主页；账号体系顺延 v0.5。
 - **v0.3.0**（2026-09-20）：PWA（manifest+图标+Service Worker，可安装/离线可用）、R2 公开域直连（`R2_PUBLIC_BASE` 可配置，回退代理）、SEO 基础 meta。
 - **v0.2.0**（2026-09-20）：图片压缩上传、浏览量、收藏（含首页筛选）、举报、上传限流（12 次/分钟）、列表骨架屏。

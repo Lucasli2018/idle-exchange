@@ -325,3 +325,22 @@ a { color: inherit; text-decoration: none; }
 }
 .user-name { font-size: 18px; font-weight: 700; }
 .user-sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+/* ===== 账号入口（顶栏）===== */
+.sub a, .sub #accountSlot a { color: #fff; text-decoration: underline; font-weight: 600; }
+
+/* ===== 管理后台 ===== */
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+@media (min-width: 640px) { .stats-row { grid-template-columns: repeat(6, 1fr); } }
+.stat-card { background: var(--card); border-radius: 12px; padding: 12px 8px; text-align: center; box-shadow: var(--shadow); }
+.stat-v { font-size: 20px; font-weight: 800; color: var(--coral-dark); }
+.stat-k { font-size: 12px; color: var(--muted); }
+.report-card {
+  display: flex; gap: 10px; align-items: center;
+  background: var(--card); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px;
+  box-shadow: var(--shadow);
+}
+.report-main { flex: 1; min-width: 0; }
+.report-title { font-weight: 600; font-size: 14px; }
+.report-reason { font-size: 13px; color: #444; margin: 3px 0; word-break: break-word; }
+.report-time { font-size: 11px; color: var(--muted); }

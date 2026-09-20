@@ -5,13 +5,13 @@
  *  - 图片 /api/files/*：cache-first（key 唯一且不可变，可放心长缓存）
  *  - 其它 /api/*：完全不接管，数据永远走网络
  */
-const CACHE = "idle-v2";
+const CACHE = "idle-v3";
 const SHELL = [
   "/", "/index.html", "/post.html", "/item.html",
-  "/messages.html", "/user.html",
+  "/messages.html", "/user.html", "/auth.html", "/admin.html",
   "/css/style.css",
   "/js/api.js", "/js/home.js", "/js/post.js", "/js/detail.js",
-  "/js/messages.js", "/js/user.js",
+  "/js/messages.js", "/js/user.js", "/js/auth.js", "/js/admin.js",
   "/favicon.svg", "/manifest.json",
   "/icons/icon-192.png", "/icons/icon-512.png",
 ];

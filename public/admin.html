@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>管理后台 · 闲置交换</title>
+  <meta name="theme-color" content="#FF7A45">
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="theme-color" content="#FF7A45">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="back-link" href="/index.html" style="color:#fff;padding:0;">‹ 返回</a>
+    <h1 style="font-size:16px;">管理后台</h1>
+    <div style="width:48px;"></div>
+  </header>
+
+  <div class="form-page" style="max-width:720px;">
+    <div id="loginBox">
+      <div class="field">
+        <label>管理口令 <span class="hint">（Pages 环境变量 ADMIN_KEY）</span></label>
+        <input type="password" id="adminKey" placeholder="输入管理口令" />
+      </div>
+      <button class="btn btn-primary btn-block" id="loginBtn">进入</button>
+    </div>
+
+    <div id="dashBox" style="display:none;">
+      <div id="statsRow" class="stats-row"></div>
+
+      <h3 style="margin:18px 0 8px;">举报处理</h3>
+      <div id="reportList"></div>
+
+      <button class="btn" id="refreshBtn" style="margin-top:14px;">刷新</button>
+      <button class="btn" id="logoutBtn" style="color:#e74c3c;">退出</button>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+</html>

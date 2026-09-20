@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>账号 · 闲置交换</title>
+  <meta name="theme-color" content="#FF7A45">
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-180.png">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="back-link" href="/index.html" style="color:#fff;padding:0;">‹ 返回</a>
+    <h1 style="font-size:16px;">账号</h1>
+    <div style="width:48px;"></div>
+  </header>
+
+  <div class="form-page" style="max-width:420px;">
+    <div class="chips" style="margin-bottom:16px;">
+      <span class="chip" id="tabLogin">登录</span>
+      <span class="chip active" id="tabRegister">注册（绑定本设备）</span>
+    </div>
+
+    <form id="authForm">
+      <div class="field">
+        <label>昵称</label>
+        <input type="text" id="nickname" maxlength="20" placeholder="1-20 字" />
+      </div>
+      <div class="field">
+        <label>口令</label>
+        <input type="password" id="password" placeholder="至少 6 位" />
+      </div>
+      <div class="field" id="communityField">
+        <label>所在小区 / 学校 / 公司 <span class="hint">（选填）</span></label>
+        <input type="text" id="community" maxlength="30" placeholder="选填" />
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" id="submitBtn">注册</button>
+      <p class="hint" style="text-align:center;margin-top:12px;" id="modeHint">
+        注册会把当前设备的身份绑定到昵称，以后任何设备用昵称+口令即可找回物品、收藏和会话。
+      </p>
+    </form>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+</body>
+</html>

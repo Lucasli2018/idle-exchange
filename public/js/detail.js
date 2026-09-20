@@ -41,10 +41,12 @@ function render(item) {
       ${item.contactPhone ? `<div class="line"><span>手机</span><span class="copy" data-copy="${escapeHtml(item.contactPhone)}">${escapeHtml(item.contactPhone)} · 复制</span></div>` : ""}
     </div>`;
 
-  const ownerActions = isOwner ? `
-      <button class="btn ${sold ? "" : "btn-primary"}" id="toggleSold">${sold ? "重新上架" : "标记已出"}</button>
-      <button class="btn" id="deleteBtn" style="color:#e74c3c;">删除</button>
-  ` : "";
+  const expired = !sold && (Date.now() - item.createdAt > 30 * 86400 * 1000);
+  const ownerActions = `
+      ${expired ? `<button class="btn btn-primary" id="bumpBtn">⌛ 已过期 · 擦亮</button>` : ""}
+      ${isOwner ? `<button class="btn ${sold ? "" : "btn-primary"}" id="toggleSold">${sold ? "重新上架" : "标记已出"}</button>
+      <button class="btn" id="deleteBtn" style="color:#e74c3c;">删除</button>` : ""}
+  `;
 
   $("#detail").innerHTML = `
     ${galleryHtml(item)}
@@ -86,6 +88,8 @@ function render(item) {
   if (isOwner) {
     $("#toggleSold").addEventListener("click", () => toggleSold(item, sold));
     $("#deleteBtn").addEventListener("click", () => removeItem(item));
+    const bumpBtn = $("#bumpBtn");
+    if (bumpBtn) bumpBtn.addEventListener("click", () => bumpItem(item));
   }
 }
 
@@ -110,6 +114,16 @@ async function toggleFavorite(item) {
     showToast("操作失败：" + e.message, "error");
   } finally {
     btn.disabled = false;
+  }
+}
+
+async function bumpItem(item) {
+  try {
+    await api.patch("/api/items/" + item.id, { clientId, action: "bump" });
+    showToast("已擦亮，重新进入公共列表 30 天窗口", "success");
+    load();
+  } catch (e) {
+    showToast("操作失败：" + e.message, "error");
   }
 }
 
