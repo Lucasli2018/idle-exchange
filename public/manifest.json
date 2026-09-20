@@ -1,0 +1,17 @@
+{
+  "name": "闲置交换 · 社区二手好物",
+  "short_name": "闲置交换",
+  "description": "小区、学校、公司内部的二手闲置交换平台：发布、分类筛选、免费送、换物、求购。",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff7f2",
+  "theme_color": "#FF7A45",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

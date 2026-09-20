@@ -124,3 +124,10 @@ function typeBadgeClass(type) {
 
 // (全局符号：CATEGORIES, TYPE_LABELS, ApiClient, ApiError, getClientId,
 //  getProfile, setProfile, showToast, escapeHtml, formatPrice, formatTime, typeBadgeClass)
+
+// ============ PWA：Service Worker 注册（仅 https；失败静默）============
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}
