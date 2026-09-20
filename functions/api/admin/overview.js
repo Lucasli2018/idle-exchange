@@ -2,7 +2,7 @@
 // Header: X-Admin-Key
 
 import { json } from "../../_shared/helpers.js";
-import { requireAdmin } from "../_guard.js";
+import { requireAdmin } from "./_guard.js";
 
 export async function onRequestGet({ request, env }) {
   const g = requireAdmin(request, env);

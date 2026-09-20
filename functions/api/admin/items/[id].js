@@ -2,7 +2,7 @@
 // Body: {action: 'remove' | 'restore'}   Header: X-Admin-Key
 
 import { json, fail, readJson, getString, nowMs } from "../../../_shared/helpers.js";
-import { requireAdmin } from "../../_guard.js";
+import { requireAdmin } from "../_guard.js";
 
 export async function onRequestPost({ request, env, params }) {
   const g = requireAdmin(request, env);
