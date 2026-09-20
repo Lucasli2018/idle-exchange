@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>发布闲置 · 闲置交换</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="back-link" href="/index.html" style="color:#fff;padding:0;">‹ 返回</a>
+    <h1 style="font-size:16px;">发布闲置</h1>
+    <div style="width:48px;"></div>
+  </header>
+
+  <form class="form-page" id="postForm">
+    <div class="field">
+      <label>交易类型</label>
+      <div class="radio-group" id="typeGroup">
+        <label><input type="radio" name="type" value="sell" checked><span>出售</span></label>
+        <label><input type="radio" name="type" value="free"><span>免费送</span></label>
+        <label><input type="radio" name="type" value="exchange"><span>换物</span></label>
+        <label><input type="radio" name="type" value="wanted"><span>求购</span></label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>标题 <span class="hint">（一句话说清是什么）</span></label>
+      <input type="text" id="title" maxlength="60" placeholder="例如：九成新 Kindle 阅读器" />
+    </div>
+
+    <div class="field">
+      <label>分类</label>
+      <select id="category">
+        <option value="">请选择分类</option>
+      </select>
+    </div>
+
+    <div class="field" id="priceField">
+      <label>价格（元）</label>
+      <input type="number" id="price" min="0" step="0.01" placeholder="0 表示面议" />
+    </div>
+
+    <div class="field">
+      <label>描述 <span class="hint">（成色、规格、自提或邮寄等）</span></label>
+      <textarea id="description" maxlength="1000" placeholder="补充物品细节…"></textarea>
+    </div>
+
+    <div class="field">
+      <label>所在小区 / 学校 / 公司</label>
+      <input type="text" id="community" placeholder="例如：阳光花园小区" />
+    </div>
+
+    <div class="field">
+      <label>图片 <span class="hint">（最多 9 张，第一张为封面）</span></label>
+      <div class="uploader" id="uploader">
+        <div class="slot" id="addSlot">+</div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" multiple hidden />
+    </div>
+
+    <div class="field">
+      <label>联系人昵称</label>
+      <input type="text" id="contactName" maxlength="20" placeholder="买家怎么称呼你" />
+    </div>
+
+    <div class="field">
+      <label>微信号 <span class="hint">（主要联系方式）</span></label>
+      <input type="text" id="contactWechat" maxlength="40" placeholder="微信号 / 微信手机号" />
+    </div>
+
+    <div class="field">
+      <label>手机号 <span class="hint">（选填）</span></label>
+      <input type="text" id="contactPhone" maxlength="20" placeholder="选填" />
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-block" id="submitBtn">发布</button>
+  </form>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/post.js"></script>
+</body>
+</html>
