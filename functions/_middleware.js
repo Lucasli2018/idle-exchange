@@ -58,6 +58,25 @@ async function ensureDatabase(env) {
         reason     TEXT,
         created_at INTEGER NOT NULL
       )`,
+      `CREATE TABLE IF NOT EXISTS conversations (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        item_id    INTEGER NOT NULL,
+        buyer_id   TEXT    NOT NULL,
+        seller_id  TEXT    NOT NULL,
+        created_at INTEGER NOT NULL,
+        last_at    INTEGER NOT NULL,
+        UNIQUE(item_id, buyer_id)
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_conv_buyer  ON conversations(buyer_id,  last_at DESC)`,
+      `CREATE INDEX IF NOT EXISTS idx_conv_seller ON conversations(seller_id, last_at DESC)`,
+      `CREATE TABLE IF NOT EXISTS messages (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        conv_id    INTEGER NOT NULL,
+        sender_id  TEXT    NOT NULL,
+        body       TEXT    NOT NULL,
+        created_at INTEGER NOT NULL
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_msg_conv ON messages(conv_id, created_at)`,
     ];
 
     for (const sql of statements) {
