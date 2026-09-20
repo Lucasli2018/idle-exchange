@@ -11,12 +11,15 @@ async function ensureDatabase(env) {
     // 幂等建表（每次冷启动执行一次，已存在则跳过）
     const statements = [
       `CREATE TABLE IF NOT EXISTS users (
-        id         INTEGER PRIMARY KEY AUTOINCREMENT,
-        client_id  TEXT    NOT NULL UNIQUE,
-        nickname   TEXT,
-        community  TEXT,
-        created_at INTEGER NOT NULL
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_id     TEXT    NOT NULL UNIQUE,
+        nickname      TEXT,
+        community     TEXT,
+        password_hash TEXT,
+        password_salt TEXT,
+        created_at    INTEGER NOT NULL
       )`,
+      `CREATE INDEX IF NOT EXISTS idx_users_nickname ON users(nickname)`,
       `CREATE TABLE IF NOT EXISTS items (
         id           INTEGER PRIMARY KEY AUTOINCREMENT,
         owner_id     TEXT    NOT NULL,
@@ -86,6 +89,8 @@ async function ensureDatabase(env) {
     // 幂等补列（存量库升级）
     const upgrades = [
       { table: "items", column: "views", ddl: "ALTER TABLE items ADD COLUMN views INTEGER NOT NULL DEFAULT 0" },
+      { table: "users", column: "password_hash", ddl: "ALTER TABLE users ADD COLUMN password_hash TEXT" },
+      { table: "users", column: "password_salt", ddl: "ALTER TABLE users ADD COLUMN password_salt TEXT" },
     ];
     for (const u of upgrades) {
       const cols = await env.DB.prepare(`PRAGMA table_info(${u.table})`).all();

@@ -4,12 +4,15 @@
 -- 存量库增量升级用 migrations/0001_views_favorites_reports.sql
 
 CREATE TABLE IF NOT EXISTS users (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  client_id  TEXT    NOT NULL UNIQUE,
-  nickname   TEXT,
-  community  TEXT,
-  created_at INTEGER NOT NULL
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  client_id     TEXT    NOT NULL UNIQUE,
+  nickname      TEXT,
+  community     TEXT,
+  password_hash TEXT,
+  password_salt TEXT,
+  created_at    INTEGER NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_users_nickname ON users(nickname);
 
 CREATE TABLE IF NOT EXISTS items (
   id           INTEGER PRIMARY KEY AUTOINCREMENT,
