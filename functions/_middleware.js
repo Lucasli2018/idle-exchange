@@ -6,18 +6,9 @@ let dbReady = false;
 
 async function ensureDatabase(env) {
   if (dbReady || initializing) return;
+  initializing = true;
   try {
-    const result = await env.DB.prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='items'"
-    ).first();
-    if (result) {
-      dbReady = true;
-      return;
-    }
-
-    initializing = true;
-    console.log("[middleware] 首次访问，初始化数据库 schema…");
-
+    // 幂等建表（每次冷启动执行一次，已存在则跳过）
     const statements = [
       `CREATE TABLE IF NOT EXISTS users (
         id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -43,6 +34,7 @@ async function ensureDatabase(env) {
         images       TEXT    NOT NULL DEFAULT '[]',
         status       TEXT    NOT NULL DEFAULT 'available'
                        CHECK (status IN ('available','sold','removed')),
+        views        INTEGER NOT NULL DEFAULT 0,
         created_at   INTEGER NOT NULL,
         updated_at   INTEGER NOT NULL
       )`,
@@ -51,13 +43,39 @@ async function ensureDatabase(env) {
       `CREATE INDEX IF NOT EXISTS idx_items_status   ON items(status)`,
       `CREATE INDEX IF NOT EXISTS idx_items_owner    ON items(owner_id)`,
       `CREATE INDEX IF NOT EXISTS idx_items_created  ON items(created_at DESC)`,
+      `CREATE TABLE IF NOT EXISTS favorites (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_id  TEXT    NOT NULL,
+        item_id    INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        UNIQUE(client_id, item_id)
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_fav_client ON favorites(client_id, created_at DESC)`,
+      `CREATE TABLE IF NOT EXISTS reports (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        item_id    INTEGER NOT NULL,
+        client_id  TEXT,
+        reason     TEXT,
+        created_at INTEGER NOT NULL
+      )`,
     ];
 
     for (const sql of statements) {
       await env.DB.prepare(sql).run();
     }
 
-    console.log("[middleware] 数据库初始化完成");
+    // 幂等补列（存量库升级）
+    const upgrades = [
+      { table: "items", column: "views", ddl: "ALTER TABLE items ADD COLUMN views INTEGER NOT NULL DEFAULT 0" },
+    ];
+    for (const u of upgrades) {
+      const cols = await env.DB.prepare(`PRAGMA table_info(${u.table})`).all();
+      if (!cols.results.some(c => c.name === u.column)) {
+        await env.DB.prepare(u.ddl).run();
+        console.log(`[middleware] 已升级 ${u.table}.${u.column}`);
+      }
+    }
+
     dbReady = true;
   } catch (err) {
     console.error("[middleware] 数据库初始化失败:", err);

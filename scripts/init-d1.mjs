@@ -76,8 +76,12 @@ let ok = 0, fail = 0;
 for (const s of stmts) {
   try { await query(s); ok++; }
   catch (e) {
-    fail++;
-    console.error(`FAIL: ${e.message}\n  SQL: ${s.slice(0, 90).replace(/\n/g, " ")}`);
+    if (/duplicate column|already exists/i.test(e.message)) {
+      console.log("SKIP (已存在):", s.slice(0, 70).replace(/\n/g, " "));
+    } else {
+      fail++;
+      console.error(`FAIL: ${e.message}\n  SQL: ${s.slice(0, 90).replace(/\n/g, " ")}`);
+    }
   }
 }
 console.log(`done: ok=${ok} fail=${fail}`);
