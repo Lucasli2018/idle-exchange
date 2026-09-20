@@ -22,6 +22,8 @@ html, body {
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
   font-size: 14px;
   line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
 }
 
 a { color: inherit; text-decoration: none; }
@@ -34,14 +36,20 @@ a { color: inherit; text-decoration: none; }
   background: linear-gradient(135deg, var(--coral), var(--coral-dark));
   color: #fff;
   padding: 14px 16px;
+  padding-top: calc(14px + env(safe-area-inset-top));
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   box-shadow: 0 2px 8px rgba(242, 92, 31, 0.25);
 }
+.topbar .brand { flex: 0 1 auto; min-width: 0; margin-right: auto; }
 .topbar h1 { font-size: 18px; margin: 0; font-weight: 700; letter-spacing: 1px; }
-.topbar .sub { font-size: 11px; opacity: 0.85; margin-top: 2px; }
-.topbar .actions { display: flex; gap: 8px; align-items: center; }
+.topbar .sub {
+  font-size: 11px; opacity: 0.85; margin-top: 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.topbar .actions { display: flex; gap: 8px; align-items: center; flex: 0 0 auto; }
 .topbar .btn { padding: 7px 11px; font-size: 12px; }
 .unread-dot {
   display: inline-block; margin-left: 4px; min-width: 15px; padding: 0 4px;
@@ -112,9 +120,15 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ===== 物品网格 ===== */
-.list { padding: 14px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-@media (min-width: 720px) { .list { grid-template-columns: repeat(3, 1fr); max-width: 980px; margin: 0 auto; } }
-@media (min-width: 1024px) { .list { grid-template-columns: repeat(4, 1fr); } }
+.list {
+  padding: 14px 14px calc(24px + env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+@media (min-width: 720px) { .list { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 980px; margin: 0 auto; } }
+@media (min-width: 1024px) { .list { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
 .card {
   background: var(--card);
@@ -151,7 +165,12 @@ a { color: inherit; text-decoration: none; }
   min-height: 38px;
 }
 .card .price { color: var(--coral-dark); font-weight: 700; font-size: 15px; }
-.card .meta { color: var(--muted); font-size: 12px; margin-top: 4px; display: flex; justify-content: space-between; }
+.card .meta {
+  color: var(--muted); font-size: 12px; margin-top: 4px;
+  display: flex; justify-content: space-between; gap: 6px;
+}
+.card .meta span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card .meta span:last-child { flex: 0 0 auto; }
 
 /* ===== 徽章 ===== */
 .badge {
@@ -331,9 +350,6 @@ a { color: inherit; text-decoration: none; }
 .user-name { font-size: 18px; font-weight: 700; }
 .user-sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
 
-/* ===== 账号入口（顶栏）===== */
-.sub a, .sub #accountSlot a { color: #fff; text-decoration: underline; font-weight: 600; }
-
 /* ===== 管理后台 ===== */
 .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 @media (min-width: 640px) { .stats-row { grid-template-columns: repeat(6, 1fr); } }
@@ -435,25 +451,153 @@ a { color: inherit; text-decoration: none; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ===== 首页登录 CTA 横幅 ===== */
-.cta-banner {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  margin: 12px 14px 0; padding: 14px 16px; border-radius: 14px;
-  background: linear-gradient(135deg, var(--coral), var(--coral-dark)); color: #fff;
-  box-shadow: 0 6px 18px rgba(242, 92, 31, .28);
-  animation: fadeUp .3s ease;
+/* ===== 顶栏账号入口（右侧醒目登录按钮）===== */
+.account-slot {
+  display: inline-flex; align-items: center; gap: 8px;
+  flex: 0 0 auto;
 }
-.cta-title { font-weight: 700; font-size: 14px; }
-.cta-sub { font-size: 12px; opacity: .9; margin-top: 3px; }
-.cta-banner .btn-light {
-  background: #fff; color: var(--coral-dark); border-radius: 999px;
-  padding: 9px 16px; font-weight: 700; white-space: nowrap; cursor: pointer;
+.btn-login {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  background: #fff; color: var(--coral-dark);
+  border-radius: 999px; padding: 11px 24px;
+  font-size: 15px; font-weight: 800; letter-spacing: .5px;
+  white-space: nowrap; cursor: pointer; flex: 0 0 auto;
+  box-shadow: 0 3px 12px rgba(140, 40, 0, .22), 0 0 0 3px rgba(255, 255, 255, .30);
+  animation: loginPulse 2.6s ease-in-out infinite;
+}
+.btn-login:active { transform: scale(.96); }
+@keyframes loginPulse {
+  0%, 100% { box-shadow: 0 3px 12px rgba(140,40,0,.22), 0 0 0 3px rgba(255,255,255,.30); }
+  50%      { box-shadow: 0 6px 20px rgba(140,40,0,.30), 0 0 0 8px rgba(255,255,255,.12); }
+}
+@media (prefers-reduced-motion: reduce) { .btn-login { animation: none; } }
+
+.user-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  max-width: 42vw;
+  background: rgba(255, 255, 255, .22); color: #fff;
+  border-radius: 999px; padding: 9px 14px;
+  font-size: 13px; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.btn-logout {
+  border: none; cursor: pointer; flex: 0 0 auto;
+  background: #fff; color: var(--coral-dark);
+  border-radius: 999px; padding: 9px 16px;
+  font-size: 13px; font-weight: 700;
+}
+.btn-logout:active { transform: scale(.96); }
+
+/* ============================================================
+   ===== 手机端适配（≤ 640px）=====
+   原则：顶栏拆两行（品牌+登录按钮 / 四个导航）、筛选不挤压、
+        卡片两列、触控目标 ≥ 40px、避开刘海与底部安全区
+   ============================================================ */
+@media (max-width: 640px) {
+  /* --- 顶栏 --- */
+  .topbar {
+    flex-wrap: wrap;
+    row-gap: 10px;
+    padding: 10px 12px;
+    padding-top: calc(10px + env(safe-area-inset-top));
+  }
+  .topbar h1 { font-size: 17px; }
+  .topbar .brand { flex: 1 1 auto; }
+  .topbar .actions { order: 2; flex: 1 1 100%; gap: 6px; }
+  .topbar .actions .btn {
+    flex: 1 1 0; min-width: 0; text-align: center;
+    padding: 10px 4px; font-size: 13px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .account-slot { order: 1; margin-left: auto; }
+  .btn-login { padding: 10px 20px; font-size: 14px; letter-spacing: .3px; }
+  .user-chip { max-width: 32vw; padding: 8px 12px; }
+  .btn-logout { padding: 8px 13px; }
+
+  /* --- 筛选区 --- */
+  .filters { padding: 10px 12px 4px; }
+  .search-row { gap: 6px; margin-bottom: 8px; }
+  .search-row input { min-width: 0; padding: 11px 14px; font-size: 16px; }
+  .search-row .btn { flex: 0 0 auto; min-height: 42px; padding: 0 18px; font-size: 14px; }
+  .chips { margin: 0 -12px; padding: 0 12px 6px; -webkit-overflow-scrolling: touch; }
+  .chip { padding: 7px 14px; }
+  .row2 { flex-wrap: wrap; gap: 8px; }
+  .row2 select { flex: 1 1 calc(50% - 4px); min-width: 0; font-size: 14px; padding: 10px 8px; }
+  .row2 select:last-child { flex-basis: 100%; }
+
+  /* --- 列表 --- */
+  .list { padding: 12px 12px calc(20px + env(safe-area-inset-bottom)); gap: 10px; }
+  .card .body { padding: 8px 9px 10px; }
+  .card .title { font-size: 13.5px; min-height: 36px; }
+  .card .price { font-size: 14px; }
+  .more-wrap { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+  .more-wrap .btn { min-width: 160px; padding: 11px 20px; }
+
+  /* --- 详情页 --- */
+  .detail .gallery { gap: 6px; padding: 10px; }
+  .detail .gallery img,
+  .detail .gallery .ph { height: 200px; }
+  .detail .gallery .ph { width: 200px; font-size: 13px; }
+  .detail .info { padding: 4px 14px 14px; }
+  .detail .info h2 { font-size: 18px; }
+  .detail .info .price { font-size: 20px; }
+  .contact-box { margin: 12px 14px; }
+  .contact-box .line { font-size: 13px; gap: 8px; align-items: center; }
+  .contact-box .line span:last-child { min-width: 0; word-break: break-all; text-align: right; }
+  .action-bar { padding: 0 14px 8px; gap: 8px; }
+  .action-bar .btn { flex: 1 1 calc(50% - 4px); padding: 11px 10px; font-size: 13px; }
+  .report-row { padding: 0 14px calc(20px + env(safe-area-inset-bottom)); }
+
+  /* --- 消息页 --- */
+  .msg-list { padding: 12px 12px calc(84px + env(safe-area-inset-bottom)); }
+  .bubble { max-width: 82%; }
+  .thread-item { margin: 0 10px 10px; padding: 11px 12px; }
+  .chat-input input { min-width: 0; font-size: 16px; }
+  .chat-input .btn { flex: 0 0 auto; padding: 10px 16px; }
+
+  /* --- 表单页（发布） --- */
+  .form-page { padding: 12px 14px calc(48px + env(safe-area-inset-bottom)); }
+  .field input[type=text], .field input[type=number], .field textarea, .field select,
+  .pw-wrap input { font-size: 16px; }
+  .radio-group label { padding: 9px 14px; font-size: 13px; }
+  .uploader { gap: 8px; }
+  .uploader .slot { width: 76px; height: 76px; }
+
+  /* --- 认证页 --- */
+  .auth-wrap { padding: 16px 14px calc(48px + env(safe-area-inset-bottom)); }
+  .auth-head { margin-bottom: 14px; }
+  .auth-head h2 { font-size: 18px; }
+  .auth-logo { width: 56px; height: 56px; font-size: 28px; border-radius: 16px; }
+  .auth-card { padding: 14px; border-radius: 16px; }
+  .auth-tab { padding: 11px 0; }
+
+  /* --- 用户主页 --- */
+  .user-hero { padding: 12px 12px 2px; }
+  .user-card { padding: 14px; gap: 12px; }
+  .user-name { font-size: 17px; }
+
+  /* --- 后台 --- */
+  .stats-row { gap: 8px; }
+  .stat-card { padding: 10px 6px; }
+  .stat-v { font-size: 18px; }
+
+  /* --- 全局 --- */
+  .toast { bottom: calc(28px + env(safe-area-inset-bottom)); max-width: 88vw; }
+  .back-link { padding: 10px 12px; }
+  .btn { min-height: 36px; }
 }
 
-/* 顶栏登录胶囊 */
-.login-pill {
-  color: #fff !important; background: rgba(255, 255, 255, .22);
-  border-radius: 999px; padding: 3px 10px; font-weight: 700;
-  text-decoration: none !important;
+/* 大屏手机 / 小平板：列表三列 */
+@media (min-width: 560px) and (max-width: 719px) {
+  .list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
-.login-pill:active { background: rgba(255, 255, 255, .34); }
+
+/* 超窄屏（≤ 360px）：进一步压缩 */
+@media (max-width: 360px) {
+  .list { gap: 8px; padding: 10px 10px calc(18px + env(safe-area-inset-bottom)); }
+  .card .title { font-size: 13px; min-height: 34px; }
+  .card .meta { font-size: 11px; }
+  .topbar .actions .btn { font-size: 12px; padding: 9px 2px; }
+  .btn-login { padding: 9px 16px; font-size: 13px; }
+  .chip { padding: 6px 12px; font-size: 12.5px; }
+}

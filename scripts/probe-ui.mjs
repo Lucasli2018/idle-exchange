@@ -87,6 +87,13 @@ try {
   // ---- 未登录场景 ----
   await goto(BASE + "/index.html");
   await evalJs("localStorage.clear()");
+  await goto(BASE + "/index.html");
+
+  // A0. 顶栏账号入口：未登录 → 醒目登录按钮，且无登录 CTA 横幅
+  check("首页顶部存在登录注册按钮",
+    await evalJs(`!!document.querySelector("#accountSlot .btn-login")`), "");
+  check("登录 CTA 横幅已移除",
+    await evalJs(`!document.querySelector("#ctaBanner")`), "");
 
   // A. 未登录访问发布页 → 跳登录（带回跳）
   let href = await goto(BASE + "/post.html");
@@ -139,10 +146,12 @@ try {
   href = await goto(BASE + "/messages.html");
   check("已登录可进入 /messages", pathOf(href) === "/messages", href);
 
-  // I. 已登录时首页不显示登录 CTA
+  // I. 已登录时顶栏切换为「昵称 + 退出」
   await goto(BASE + "/index.html");
-  check("已登录首页隐藏登录 CTA",
-    await evalJs(`document.querySelector("#ctaBanner").hidden === true`), "");
+  check("已登录首页隐藏登录按钮",
+    await evalJs(`!document.querySelector("#accountSlot .btn-login")`), "");
+  check("已登录首页显示昵称 + 退出",
+    await evalJs(`!!document.querySelector("#accountSlot .user-chip") && !!document.querySelector("#accountSlot .btn-logout")`), "");
 } finally {
   try { ws && ws.close(); } catch {}
   chrome.kill();

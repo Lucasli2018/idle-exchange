@@ -17,16 +17,18 @@
 </head>
 <body>
   <header class="topbar">
-    <div>
+    <div class="brand">
       <h1>闲置交换</h1>
-      <div class="sub">小区 · 学校 · 公司 二手好物 · <span id="accountSlot"></span></div>
+      <div class="sub">小区 · 学校 · 公司 二手好物</div>
     </div>
-    <div class="actions">
+    <nav class="actions">
       <a class="btn btn-ghost" id="msgBtn" href="/messages.html">消息</a>
       <button class="btn btn-ghost" id="favBtn">收藏</button>
       <button class="btn btn-ghost" id="mineBtn">我的</button>
       <a class="btn btn-primary" href="/post.html">+ 发布</a>
-    </div>
+    </nav>
+    <!-- 账号入口：置于右侧，未登录时为醒目的登录 / 注册按钮 -->
+    <span class="account-slot" id="accountSlot"></span>
   </header>
 
   <section class="filters">
@@ -55,15 +57,6 @@
       </select>
     </div>
   </section>
-
-  <!-- 未登录时的醒目登录入口 -->
-  <div class="cta-banner" id="ctaBanner" hidden>
-    <div>
-      <div class="cta-title">登录账号，跨设备同步你的发布与收藏</div>
-      <div class="cta-sub">用账号 + 密码，随时在新手机上找回</div>
-    </div>
-    <a class="btn btn-light" href="/auth.html">登录 / 注册</a>
-  </div>
 
   <main class="list" id="list"></main>
   <div class="more-wrap" id="moreWrap" style="display:none;">
