@@ -1,5 +1,6 @@
 # Cloudflare Pages 项目配置
-# 部署命令：wrangler pages deploy . --project-name=idle-exchange
+# 部署命令：wrangler pages deploy public --project-name=idle-exchange
+# （必须指定 public 目录！deploy . 会把整个项目根当静态资产上传）
 # 本地开发：wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 
 name = "idle-exchange"

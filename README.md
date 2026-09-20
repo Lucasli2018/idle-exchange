@@ -89,8 +89,9 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
    - 把 `bucket_name` 确认是 `idle-exchange-images`（或在 `init-d1.mjs` 里改一致）。
 3. **部署**
    ```bash
-   wrangler pages deploy . --project-name=idle-exchange
+   wrangler pages deploy public --project-name=idle-exchange
    ```
+   > ⚠️ 必须指定 `public` 目录。若用 `deploy .`，wrangler 会把整个项目根当作静态资产上传（路径带 `public/` 前缀），导致前端资源 404。
    在 Cloudflare Pages 项目设置里绑定：
    - D1 数据库：`idle-exchange-db`（变量名 `DB`）
    - R2 桶：`idle-exchange-images`（变量名 `R2`）
