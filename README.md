@@ -55,7 +55,9 @@ idle-exchange/
 users(client_id PK, nickname, community, created_at)
 items(id PK, owner_id, title, description, category, type,
       price, community, contact_name, contact_wechat, contact_phone,
-      images(JSON), status, created_at, updated_at)
+      images(JSON), status, views, created_at, updated_at)
+favorites(id PK, client_id, item_id, created_at, UNIQUE(client_id,item_id))
+reports(id PK, item_id, client_id, reason, created_at)
 -- category ∈ {数码,家居,图书,服饰,母婴,运动,美食,其他}
 -- type      ∈ {sell, free, exchange, wanted}
 -- status    ∈ {available, sold, removed}
@@ -104,7 +106,12 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 | GET  | `/api/items/:id` | 详情 |
 | PATCH| `/api/items/:id` | 改状态。Body：`{clientId, status}`（sold/available/removed），仅发布者 |
 | DELETE| `/api/items/:id?clientId=` | 删除，仅发布者 |
-| POST | `/api/upload` | 上传图片（multipart `file`），返回 `{key,url}` |
+| GET  | `/api/items/:id?clientId=` | 详情（`views` 自增；带 clientId 时返回 `favorited`） |
+| POST | `/api/items/:id/favorite` | 收藏。Body：`{clientId}` |
+| DELETE| `/api/items/:id/favorite?clientId=` | 取消收藏 |
+| POST | `/api/items/:id/report` | 举报。Body：`{clientId?, reason}` |
+| GET  | `/api/favorites?clientId=` | 我的收藏列表（结构同列表接口） |
+| POST | `/api/upload` | 上传图片（multipart `file` + `clientId`），限流 12 次/分钟，返回 `{key,url}` |
 | GET  | `/api/files/:key` | 读取图片（公开） |
 
 > **身份说明**：本 MVP 不做账号系统。发布者身份用一个本地生成的 `clientId`（存浏览器 `localStorage`）标识，用于「我的发布」与「标记已出 / 删除」的归属校验。同一浏览器即为同一发布者。
@@ -119,12 +126,12 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 
 ## 开发路线图（Roadmap）
 
-### v0.2 · 体验与防滥用（近期）
-- [ ] 前端图片压缩（canvas 缩图后再上传，省 R2 流量）
-- [ ] 浏览量统计（items 加 `views` 列，详情页自增）
-- [ ] 收藏 / 取消收藏（`favorites` 表，按 clientId）
-- [ ] 上传频率限制（按 clientId + IP 简单限流）与举报入口
-- [ ] 列表骨架屏 / 下拉刷新体验优化
+### v0.2 · 体验与防滥用 ✅（2026-09-20 完成）
+- [x] 前端图片压缩（canvas 缩图 ≤1600px / JPEG 0.85，小图原图直传，解码失败兜底原图）
+- [x] 浏览量统计（items.`views` 列，详情页访问自增并展示）
+- [x] 收藏 / 取消收藏（`favorites` 表；详情页按钮 + 首页「收藏」筛选）
+- [x] 上传频率限制（按 clientId 滑动窗口 12 次/分钟，超限 429）与举报入口（`reports` 表存档）
+- [x] 列表骨架屏（加载占位动画）
 
 ### v0.3 · PWA 与成本优化
 - [ ] manifest.json + Service Worker（可安装、离线骨架）
@@ -145,6 +152,7 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 
 ## 版本历史
 
+- **v0.2.0**（2026-09-20）：图片压缩上传、浏览量、收藏（含首页筛选）、举报、上传限流（12 次/分钟）、列表骨架屏。
 - **v0.1.1**（2026-09-20）：新增站点 favicon；修复列表/详情图片不显示（后端统一把 R2 key 拼接为 `/api/files/<key>` 展示 URL）；补充开发路线图。
 - **v0.1.0**（2026-09-20）：MVP 上线——发布 / 分类筛选 / 图片上传（R2）/ 联系发布者 / 标记已出 / 我的发布。
 
