@@ -53,3 +53,63 @@ $("#authForm").addEventListener("submit", async e => {
     btn.textContent = mode === "register" ? "注册" : "登录";
   }
 });
+
+// ============ 邮箱登录（Cloudflare Access OTP）============
+const clientId = getClientId();
+const emailBtn = $("#emailBtn");
+const emailStatus = $("#emailStatus");
+
+emailBtn.addEventListener("click", () => {
+  location.href = "/api/access-login"; // Access 拦截 → OTP → 回跳 ?access=1
+});
+
+// 从 Access 回跳后：检查邮箱会话状态
+(async function checkAccessReturn() {
+  if (!new URL(location.href).searchParams.get("access")) return;
+  emailStatus.textContent = "正在检查邮箱登录状态…";
+  try {
+    const me = await api.get("/api/auth/me?clientId=" + encodeURIComponent(clientId));
+    if (!me.email) {
+      emailStatus.textContent = "未获取到邮箱会话，请重新点击「使用邮箱登录」。";
+      return;
+    }
+    emailStatus.innerHTML = `邮箱：<b>${escapeHtml(me.email)}</b><br>`;
+
+    if (me.boundSelf) {
+      emailStatus.innerHTML += "✅ 已绑定当前设备身份，可直接使用。";
+    } else if (me.boundClientId) {
+      emailStatus.innerHTML += `该邮箱已绑定其它设备账号。点击下方按钮切换到该账号（本设备此前的匿名发布不会合并）。`;
+      const b = document.createElement("button");
+      b.className = "btn btn-primary btn-block";
+      b.style.marginTop = "8px";
+      b.textContent = "切换到该账号身份";
+      b.addEventListener("click", () => {
+        localStorage.setItem("idle_client_id", me.boundClientId);
+        const p = getProfile();
+        setProfile({ ...p, accounted: true });
+        showToast("已切换身份", "success");
+        setTimeout(() => { location.href = "/index.html"; }, 700);
+      });
+      emailStatus.appendChild(b);
+    } else {
+      emailStatus.innerHTML += "将把该邮箱绑定到当前设备身份（用于以后免口令找回）。";
+      const b = document.createElement("button");
+      b.className = "btn btn-primary btn-block";
+      b.style.marginTop = "8px";
+      b.textContent = "绑定邮箱到当前设备";
+      b.addEventListener("click", async () => {
+        try {
+          await api.post("/api/auth/bind-email", { clientId });
+          setProfile({ ...getProfile(), accounted: true });
+          showToast("邮箱绑定成功！", "success");
+          setTimeout(() => { location.href = "/index.html"; }, 700);
+        } catch (e) {
+          showToast(e.message, "error");
+        }
+      });
+      emailStatus.appendChild(b);
+    }
+  } catch (e) {
+    emailStatus.textContent = "检查失败：" + e.message;
+  }
+})();

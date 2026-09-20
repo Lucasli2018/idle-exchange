@@ -10,9 +10,20 @@ CREATE TABLE IF NOT EXISTS users (
   community     TEXT,
   password_hash TEXT,
   password_salt TEXT,
+  email         TEXT,
   created_at    INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_users_nickname ON users(nickname);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE email IS NOT NULL;
+
+-- 邮箱登录会话（Cloudflare Access OTP，HttpOnly Cookie）
+CREATE TABLE IF NOT EXISTS access_sessions (
+  token      TEXT PRIMARY KEY,
+  email      TEXT    NOT NULL,
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_access_sessions_exp ON access_sessions(expires_at);
 
 CREATE TABLE IF NOT EXISTS items (
   id           INTEGER PRIMARY KEY AUTOINCREMENT,

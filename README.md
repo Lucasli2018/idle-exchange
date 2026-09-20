@@ -105,6 +105,15 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
    wrangler pages secret put ADMIN_KEY --project-name=idle-exchange
    ```
    未配置时管理接口返回 503（功能停用，不影响前台）。
+6. **（可选）邮箱登录（Cloudflare Access OTP）**
+   - Dashboard → Zero Trust → Access → Applications → 新建 **Self-hosted** 应用：
+     Domain 填 `idle-exchange.pages.dev`、Path 填 `/api/access-login`；策略 Allow + Include Everyone（One-time PIN 默认可用）。
+   - 记下应用的 **AUD tag** 与团队域（`<team>.cloudflareaccess.com`），然后：
+     ```bash
+     wrangler pages secret put ACCESS_TEAM_DOMAIN --project-name=idle-exchange
+     wrangler pages secret put ACCESS_AUD --project-name=idle-exchange
+     ```
+   - 未配置时邮箱登录按钮会提示未启用，其余功能不受影响。
 
 > 若未用 `--create`，请先在 Dashboard 手动创建 D1 数据库与 R2 桶，再执行 `node scripts/init-d1.mjs`。
 
@@ -128,6 +137,9 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 | POST | `/api/threads/:id` | 会话内回复。Body：`{clientId, body}` |
 | POST | `/api/auth/register` | 注册（绑定 clientId + 昵称 + 口令，昵称占用返回 409） |
 | POST | `/api/auth/login` | 登录（昵称+口令 → client_id，错口令 401） |
+| GET  | `/api/auth/me` | 邮箱登录状态（Cookie 会话 → `{email, boundClientId, boundSelf}`） |
+| POST | `/api/auth/bind-email` | 邮箱绑定到当前设备账号（需邮箱会话，重复绑定 409） |
+| GET  | `/api/access-login` | Cloudflare Access OTP 回跳点（建会话 Cookie → 回 `/auth.html?access=1`） |
 | GET  | `/api/admin/overview` | 管理概览（统计 + 举报列表）。Header：`X-Admin-Key` |
 | POST | `/api/admin/items/:id` | 管理下架/恢复。Body：`{action: remove\|restore}` |
 | POST | `/api/upload` | 上传图片（multipart `file` + `clientId`），限流 12 次/分钟，返回 `{key,url}` |
@@ -171,7 +183,8 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 - [ ] 多社区 / 多圈子支持（按 `community` 聚合频道页）→ v0.6
 
 ### v0.6 · 规划中
-- [ ] 微信 / 邮箱真实登录（依赖开放平台资质或 Resend 配置）
+- [x] **邮箱登录（Cloudflare Access OTP，方案一）**：无需邮件服务资质——Access 应用保护 `/api/access-login`，用户输邮箱收一次性验证码（Cloudflare 代发），Function 验证 ES256 JWT 拿到邮箱 → 7 天会话 Cookie → 绑定/切换本站身份。需配置 Pages 环境变量 `ACCESS_TEAM_DOMAIN` 与 `ACCESS_AUD`（未配置时该入口返回 503，不影响其它功能）。
+- [ ] 微信登录（需服务号资质，可用 `cloudflare-wx-api` 开源方案）
 - [ ] 私信未读数与推送提醒
 - [ ] 多圈子频道页
 - [ ] Cron Worker 冷数据归档（如仍需要）
@@ -180,6 +193,7 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 
 ## 版本历史
 
+- **v0.6.0**（2026-09-20）：邮箱登录（Cloudflare Access OTP 方案一，免邮件服务资质；需配置 Access 应用与环境变量后启用）。
 - **v0.5.0**（2026-09-20）：轻量账号（昵称+口令跨设备找回）、物品 30 天新鲜度与一键擦亮、管理后台（/admin，举报处理+下架）。
 - **v0.4.0**（2026-09-20）：站内私信（会话/聊天/轮询）、用户主页；账号体系顺延 v0.5。
 - **v0.3.0**（2026-09-20）：PWA（manifest+图标+Service Worker，可安装/离线可用）、R2 公开域直连（`R2_PUBLIC_BASE` 可配置，回退代理）、SEO 基础 meta。
