@@ -1,0 +1,24 @@
+# Cloudflare Pages 项目配置
+# 部署命令：wrangler pages deploy . --project-name=idle-exchange
+# 本地开发：wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
+
+name = "idle-exchange"
+pages_build_output_dir = "public"
+
+compatibility_date = "2025-06-01"
+compatibility_flags = ["nodejs_compat"]
+
+# D1 数据库绑定（后端访问 env.DB）
+[[d1_databases]]
+binding = "DB"
+database_name = "idle-exchange-db"
+database_id = "00000000-0000-0000-0000-000000000000"
+
+# R2 存储绑定（后端访问 env.R2，存物品图片）
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "idle-exchange-images"
+
+# 第一次部署前，先在 Cloudflare Dashboard 创建 D1 database 和 R2 bucket，
+# 然后把上面的 database_id / bucket_name 换成你实际的值。
+# 详见 README.md 的「第一次部署」章节。
