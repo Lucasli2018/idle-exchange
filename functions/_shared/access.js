@@ -1,4 +1,4 @@
-// Cloudflare Access JWT 验证（ES256）
+// Cloudflare Access JWT 验证（RS256，兼容 ES256）
 // CF_Authorization cookie 由 Access 签发，用团队域 /certs 的公钥验证
 // 需要 Pages 环境变量：ACCESS_TEAM_DOMAIN（如 xxx.cloudflareaccess.com）、ACCESS_AUD（应用 AUD tag）
 
@@ -35,21 +35,29 @@ export async function verifyAccessJwt(token, teamDomain, aud) {
   const header = JSON.parse(new TextDecoder().decode(b64urlToBytes(parts[0])));
   const payload = JSON.parse(new TextDecoder().decode(b64urlToBytes(parts[1])));
 
-  if (header.alg !== "ES256") throw new Error("不支持的签名算法");
   if (!Array.isArray(payload.aud) || !payload.aud.includes(aud)) throw new Error("AUD 不匹配");
   if ((payload.exp || 0) * 1000 < Date.now()) throw new Error("JWT 已过期");
+
+  // Cloudflare Access 使用 RS256；同时兼容 ES256
+  let keyAlg, sigAlg;
+  if (header.alg === "RS256") {
+    keyAlg = { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" };
+    sigAlg = { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" };
+  } else if (header.alg === "ES256") {
+    keyAlg = { name: "ECDSA", namedCurve: "P-256" };
+    sigAlg = { name: "ECDSA", hash: "SHA-256" };
+  } else {
+    throw new Error("不支持的签名算法：" + header.alg);
+  }
 
   const jwks = await getJwks(teamDomain);
   const jwk = jwks.find(k => k.kid === header.kid);
   if (!jwk) throw new Error("找不到匹配的公钥");
 
-  const key = await crypto.subtle.importKey(
-    "jwk", jwk, { name: "ECDSA", namedCurve: "P-256" }, false, ["verify"]
-  );
+  const key = await crypto.subtle.importKey("jwk", jwk, keyAlg, false, ["verify"]);
   const sig = b64urlToBytes(parts[2]);
-  // ES256 签名为原始 r||s（64 字节），WebCrypto 可直接验
   const ok = await crypto.subtle.verify(
-    { name: "ECDSA", hash: "SHA-256" },
+    sigAlg,
     key,
     sig,
     new TextEncoder().encode(`${parts[0]}.${parts[1]}`)

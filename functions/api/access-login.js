@@ -29,6 +29,18 @@ export async function onRequestGet({ request, env }) {
   } catch (e) {
     return fail("Access 验证失败：" + e.message, 401);
   }
+  if (!email) {
+    // 部分签发的 JWT payload 不含 email，走同域 get-identity 兜底
+    try {
+      const idRes = await fetch(new URL("/cdn-cgi/access/get-identity", request.url), {
+        headers: { cookie: `CF_Authorization=${jwt}` },
+      });
+      if (idRes.ok) {
+        const identity = await idRes.json();
+        email = identity.email || null;
+      }
+    } catch {}
+  }
   if (!email) return fail("Access 凭据中缺少邮箱信息", 401);
 
   const token = newSessionToken();
