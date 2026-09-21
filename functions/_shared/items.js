@@ -6,13 +6,21 @@
 
 // 图片展示 URL：配置了 R2_PUBLIC_BASE（自定义公开域/r2.dev）时直连 R2，
 // 否则回退 /api/files/<key> Function 代理
+//
+// 例外：已经是完整地址的项（http(s):// 外链、data: 内联、/ 开头的站内路径）
+// 原样透传，不再拼接。测试数据/外部图源无需占用 R2 即可展示。
+export function isDirectImageUrl(v) {
+  return /^(https?:\/\/|data:|\/)/i.test(String(v || ""));
+}
+
 export function imageUrls(env, keys) {
   const base = env && env.R2_PUBLIC_BASE
     ? String(env.R2_PUBLIC_BASE).replace(/\/+$/, "")
     : "";
-  return keys.map(k =>
-    base ? `${base}/${encodeURIComponent(k)}` : `/api/files/${encodeURIComponent(k)}`
-  );
+  return keys.map(k => {
+    if (isDirectImageUrl(k)) return String(k);
+    return base ? `${base}/${encodeURIComponent(k)}` : `/api/files/${encodeURIComponent(k)}`;
+  });
 }
 
 export function rowToItem(r, env) {

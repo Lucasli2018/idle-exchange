@@ -79,9 +79,27 @@ try {
     if (r.result?.exceptionDetails) throw new Error(JSON.stringify(r.result.exceptionDetails));
     return r.result?.result?.value;
   };
-  const goto = async (url, wait = 1600) => {
+  // 等 URL 收敛：除 308 clean-URL 外，页面脚本内可能还有一次跳转，固定 sleep 易踩空
+  const goto = async (url, wait = 1200) => {
     await send("Page.navigate", { url }, sid);
     await sleep(wait);
+    let last = await evalJs("location.href");
+    for (let i = 0; i < 10; i++) {
+      await sleep(300);
+      const cur = await evalJs("location.href");
+      if (cur === last) break;
+      last = cur;
+    }
+    // 再等首屏卡片渲染：布局断言（列数/宽高/溢出）依赖卡片已存在，
+    // 负载高时 fetch 会慢于固定等待，导致整片假红
+    for (let i = 0; i < 20; i++) {
+      const ok = await evalJs(`(() => {
+        const l = document.querySelector("#list");
+        return !l || l.querySelectorAll(".card").length >= 3;
+      })()`);
+      if (ok) break;
+      await sleep(200);
+    }
   };
   const setViewport = async (w, h) => {
     await send("Emulation.setDeviceMetricsOverride", {
@@ -113,7 +131,9 @@ try {
     const cards = [...document.querySelectorAll("#list .card")].map(r);
     const sel = [...document.querySelectorAll(".row2 select")].map(e => ({ id: e.id, ...r(e) }));
     return {
-      vw: innerWidth,
+      // 用布局视口宽度（不含滚动条）：innerWidth 会随纵向滚动条出现而 +15px，
+      // 导致「贴右边距」「无横向溢出」等断言在内容变多后假红
+      vw: document.documentElement.clientWidth,
       scrollW: document.documentElement.scrollWidth,
       bodyScrollW: document.body.scrollWidth,
       banner: !!q("#ctaBanner"),
@@ -180,7 +200,9 @@ try {
     return {
       hasLogin: !!q(".btn-login"),
       chip: r(q(".user-chip")), logout: r(q(".btn-logout")),
-      vw: innerWidth, scrollW: document.documentElement.scrollWidth,
+      // 用布局视口宽度（不含滚动条）：innerWidth 会随纵向滚动条出现而 +15px，
+      // 导致「贴右边距」「无横向溢出」等断言在内容变多后假红
+      vw: document.documentElement.clientWidth, scrollW: document.documentElement.scrollWidth,
       chat: !!q("#ctaBanner"),
     };
   })()`);
@@ -201,7 +223,9 @@ try {
     const r = el => { if (!el) return null; const b = el.getBoundingClientRect();
       return { l: Math.round(b.left), r: Math.round(b.right), w: Math.round(b.width), h: Math.round(b.height) }; };
     return {
-      vw: innerWidth, scrollW: document.documentElement.scrollWidth,
+      // 用布局视口宽度（不含滚动条）：innerWidth 会随纵向滚动条出现而 +15px，
+      // 导致「贴右边距」「无横向溢出」等断言在内容变多后假红
+      vw: document.documentElement.clientWidth, scrollW: document.documentElement.scrollWidth,
       login: r(document.querySelector("#accountSlot .btn-login")),
       navBtns: [...document.querySelectorAll(".topbar .actions .btn")].map(r),
       cards: [...document.querySelectorAll("#list .card")].map(r),
@@ -267,7 +291,9 @@ try {
     const r = el => { if (!el) return null; const b = el.getBoundingClientRect();
       return { l: Math.round(b.left), r: Math.round(b.right), t: Math.round(b.top), b: Math.round(b.bottom) }; };
     return {
-      vw: innerWidth, scrollW: document.documentElement.scrollWidth,
+      // 用布局视口宽度（不含滚动条）：innerWidth 会随纵向滚动条出现而 +15px，
+      // 导致「贴右边距」「无横向溢出」等断言在内容变多后假红
+      vw: document.documentElement.clientWidth, scrollW: document.documentElement.scrollWidth,
       login: r(document.querySelector("#accountSlot .btn-login")),
       nav: r(document.querySelector(".topbar .actions")),
     };
@@ -289,7 +315,9 @@ try {
                b: Math.round(b.bottom), w: Math.round(b.width), h: Math.round(b.height) }; };
     const btns = [...document.querySelectorAll(".topbar .actions .btn")];
     return {
-      vw: innerWidth, scrollW: document.documentElement.scrollWidth,
+      // 用布局视口宽度（不含滚动条）：innerWidth 会随纵向滚动条出现而 +15px，
+      // 导致「贴右边距」「无横向溢出」等断言在内容变多后假红
+      vw: document.documentElement.clientWidth, scrollW: document.documentElement.scrollWidth,
       login: r(document.querySelector("#accountSlot .btn-login")),
       nav: r(document.querySelector(".topbar .actions")),
       navRight: btns.length ? Math.round(btns[btns.length - 1].getBoundingClientRect().right) : null,

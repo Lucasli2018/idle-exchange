@@ -78,10 +78,39 @@ try {
     const r = await send("Runtime.evaluate", { expression: expr, returnByValue: true }, sid);
     return r.result?.result?.value;
   };
+  // 等 URL 收敛再取：Pages 会做 /x.html → /x 的 308，页面脚本内还可能再跳一次，
+  // 固定 sleep 在慢机 / 二次跳转时容易踩空（/messages 曾偶发失败）
   const goto = async (url, wait = 1500) => {
     await send("Page.navigate", { url }, sid);
     await sleep(wait);
-    return await evalJs("location.href");
+    let last = await evalJs("location.href");
+    for (let i = 0; i < 10; i++) {
+      await sleep(300);
+      const cur = await evalJs("location.href");
+      if (cur === last) return cur; // 连续两次相同 → 导航已稳定
+      last = cur;
+    }
+    return last;
+  };
+  // 轮询等待条件成立（页面脚本就绪 / 异步渲染用），避免固定 sleep 在负载下假红
+  const waitFor = async (expr, ms = 6000) => {
+    const t0 = Date.now();
+    while (Date.now() - t0 < ms) {
+      if (await evalJs(expr)) return true;
+      await sleep(180);
+    }
+    return false;
+  };
+  // 轮询等待 URL 满足条件（点击后的跳转是异步的）
+  const waitHref = async (pred, ms = 6000) => {
+    const t0 = Date.now();
+    let h = await evalJs("location.href");
+    while (Date.now() - t0 < ms) {
+      h = await evalJs("location.href");
+      if (pred(h)) return h;
+      await sleep(150);
+    }
+    return h;
   };
 
   // ---- 未登录场景 ----
@@ -91,7 +120,7 @@ try {
 
   // A0. 顶栏账号入口：未登录 → 醒目登录按钮，且无登录 CTA 横幅
   check("首页顶部存在登录注册按钮",
-    await evalJs(`!!document.querySelector("#accountSlot .btn-login")`), "");
+    await waitFor(`!!document.querySelector("#accountSlot .btn-login")`), "");
   check("登录 CTA 横幅已移除",
     await evalJs(`!document.querySelector("#ctaBanner")`), "");
 
@@ -107,17 +136,17 @@ try {
 
   // C. 未登录点首页「我的」→ 跳登录（回跳带 mode=mine）
   await goto(BASE + "/index.html");
+  await waitFor(`!!document.querySelector("#mineBtn")`);
   await evalJs(`document.querySelector("#mineBtn").click()`);
-  await sleep(700);
-  href = await evalJs("location.href");
+  href = await waitHref(h => pathOf(h) === "/auth");
   check("未登录点「我的」跳登录", pathOf(href) === "/auth", href);
   check("「我的」回跳带 mode=mine", queryOf(href, "redirect").includes("mode=mine"), href);
 
   // D. 未登录点首页「收藏」→ 跳登录（回跳带 mode=fav）
   await goto(BASE + "/index.html");
+  await waitFor(`!!document.querySelector("#favBtn")`);
   await evalJs(`document.querySelector("#favBtn").click()`);
-  await sleep(700);
-  href = await evalJs("location.href");
+  href = await waitHref(h => pathOf(h) === "/auth");
   check("未登录点「收藏」跳登录", pathOf(href) === "/auth", href);
   check("「收藏」回跳带 mode=fav", queryOf(href, "redirect").includes("mode=fav"), href);
 
@@ -135,12 +164,12 @@ try {
   // F. 已登录可进入发布页
   href = await goto(BASE + "/post.html");
   check("已登录可进入 /post", pathOf(href) === "/post", href);
-  check("已登录发布表单存在", await evalJs(`!!document.querySelector("#postForm")`), "");
+  check("已登录发布表单存在", await waitFor(`!!document.querySelector("#postForm")`), "");
 
   // G. 已登录 ?mode=mine 直达「我的」
   await goto(BASE + "/index.html?mode=mine");
   check("已登录 ?mode=mine 进入我的视图",
-    await evalJs(`document.querySelector("#mineBtn").classList.contains("active")`), "");
+    await waitFor(`!!document.querySelector("#mineBtn") && document.querySelector("#mineBtn").classList.contains("active")`), "");
 
   // H. 已登录可进入消息页
   href = await goto(BASE + "/messages.html");
@@ -149,9 +178,10 @@ try {
   // I. 已登录时顶栏切换为「昵称 + 退出」
   await goto(BASE + "/index.html");
   check("已登录首页隐藏登录按钮",
-    await evalJs(`!document.querySelector("#accountSlot .btn-login")`), "");
+    await waitFor(`document.querySelector("#accountSlot").innerHTML.trim().length > 0
+      && !document.querySelector("#accountSlot .btn-login")`), "");
   check("已登录首页显示昵称 + 退出",
-    await evalJs(`!!document.querySelector("#accountSlot .user-chip") && !!document.querySelector("#accountSlot .btn-logout")`), "");
+    await waitFor(`!!document.querySelector("#accountSlot .user-chip") && !!document.querySelector("#accountSlot .btn-logout")`), "");
 } finally {
   try { ws && ws.close(); } catch {}
   chrome.kill();

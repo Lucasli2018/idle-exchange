@@ -43,12 +43,16 @@ idle-exchange/
 │   ├── post.html  + js/post.js    # 发布表单页
 │   ├── item.html  + js/detail.js  # 物品详情页
 │   ├── css/style.css              # 珊瑚橙主题
+│   ├── ph/*.svg                   # 分类占位图（测试数据用，不占 R2）
 │   └── js/api.js                  # 全局 HTTP 客户端 / 工具
 ├── scripts/
 │   ├── init-d1.mjs           # 远程初始化 D1 + R2 + 建表
 │   ├── apply-migration.mjs   # 应用单个迁移 SQL
-│   ├── seed-dev.mjs          # 本地 dev D1 灌测试数据（探针依赖）
-│   ├── probe-auth.mjs        # 后端接口探针
+│   ├── seed-dev.mjs          # 本地 dev D1 灌少量数据（跑通用）
+│   ├── seed-cloud.mjs        # 真实规模测试数据（12 账号 / 46 物品 / 收藏 / 私信 / 举报）
+│   │                         #   默认直写线上 D1；--emit-sql=<f> 导出 SQL 供本地导入
+│   ├── probe-auth.mjs        # 后端接口探针（鉴权）
+│   ├── probe-list.mjs        # 列表 & 详情体验探针（筛选落 URL / 分页 / 推荐 / 按钮归属）
 │   ├── probe-ui.mjs          # 前端交互探针（登录拦截 / 回跳）
 │   └── probe-mobile.mjs      # 手机端布局探针（320/375/768/1285 视口 + 截图）
 └── migrations/               # 后续 schema 演进
@@ -71,7 +75,9 @@ messages(id PK, conv_id, sender_id, body, created_at)
 -- status    ∈ {available, sold, removed}
 ```
 
-`items.images` 存 R2 key 的 JSON 数组；图片通过 `/api/files/<key>` 公开读取。
+`items.images` 存图片 URL 的 JSON 数组：
+- R2 key（默认）→ 展示时拼成 `/api/files/<key>`（或配置 `R2_PUBLIC_BASE` 后直连 R2）
+- 以 `/` 开头的站内路径（如 `/ph/digital.svg`）、`http(s)://` 外链、`data:` 内联 → 原样透传，不占 R2
 
 ## 本地开发
 
@@ -84,6 +90,28 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 ```
 
 本地首次访问 `/api/*` 时，`functions/_middleware.js` 会自动建表（D1 本地持久化在 `.wrangler-dev/`）。
+
+### 灌测试数据（两种）
+
+```bash
+# A. 少量数据，够跑探针
+node scripts/seed-dev.mjs
+
+# B. 真实规模数据（12 账号 / 46 物品 / 8 圈子 / 收藏 / 私信 / 举报）
+node scripts/seed-cloud.mjs --emit-sql=.wrangler-dev-state/seed.sql   # 导出 SQL
+# 需先停掉 pages dev，否则 SQLITE_BUSY
+wrangler d1 execute idle-exchange-db --local --persist-to ./.wrangler-dev-state \
+  --file=.wrangler-dev-state/seed.sql
+```
+
+### 探针（本地回归）
+
+```bash
+node scripts/probe-auth.mjs      # 后端鉴权（14 项）
+node scripts/probe-list.mjs      # 列表/详情体验（37 项，需 >30 条物品以验证分页）
+node scripts/probe-ui.mjs        # 前端登录拦截与回跳（17 项）
+node scripts/probe-mobile.mjs    # 手机端布局（40 项，输出截图到 .probe-shots/）
+```
 
 ## 第一次部署
 
@@ -135,7 +163,7 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 | POST | `/api/items/:id/favorite` | 收藏。Body：`{clientId}` |
 | DELETE| `/api/items/:id/favorite?clientId=` | 取消收藏 |
 | POST | `/api/items/:id/report` | 举报。Body：`{clientId?, reason}` |
-| GET  | `/api/favorites?clientId=` | 我的收藏列表（结构同列表接口） |
+| GET  | `/api/favorites?clientId=` | 我的收藏列表（结构同列表接口）。支持 `category` `type` `q` `limit` `offset` 筛选与分页 |
 | POST | `/api/items/:id/message` | 给发布者发私信。Body：`{clientId, body}`（自动建会话） |
 | GET  | `/api/threads?clientId=` | 我的会话列表（含对方昵称/物品标题/最后一条/未读数，顶层 `totalUnread`） |
 | GET  | `/api/threads/:id?clientId=` | 会话消息流（仅参与者） |
@@ -212,6 +240,7 @@ wrangler pages dev --port 8802 --persist-to ./.wrangler-dev
 
 ## 版本历史
 
+- **v0.7.2**（2026-09-21）：**列表体验打磨 + 分页修复**——① 修复 `limit`/`offset` 被静默忽略（`getNumber` 用下标从 `URLSearchParams` 取值恒为 `undefined`），此前「加载更多」只是重复第一页并产生重复卡片；② 筛选条件同步到 URL（可分享 / 刷新保留），并把 URL 状态回填到下拉与 chips；③ 新增结果计数条（含当前筛选条件）与「清空筛选」入口；④ 区分「搜索无结果」与「频道暂无物品」两种空态；⑤ 翻页到底显示结束提示；⑥ 详情页新增同类闲置推荐（横向滑动，排除自身）；⑦ 收藏列表支持分类 / 类型 / 关键词筛选；⑧ 修复「擦亮」按钮对非发布者显示但点了没反应的 bug；⑨ 图片字段支持站内路径 / 外链 / data URI 原样透传（测试数据用 `/ph/*.svg` 占位图，不占 R2）；⑩ 新增 `scripts/seed-cloud.mjs`（真实规模测试数据，可直写线上 D1 或导出 SQL）与 `scripts/probe-list.mjs`（37 项体验探针），探针统一改为条件轮询，消除固定 sleep 导致的偶发假红。
 - **v0.7.1**（2026-09-21）：**UI 与手机端适配优化**——登录 / 注册入口放大为顶栏右侧醒目白底胶囊按钮（带呼吸光晕，登录态切换为「昵称 + 退出」）；移除首页登录提示横幅（信息合并进按钮）；顶栏在窄屏拆为两行（品牌+登录按钮 / 四个等宽导航），筛选区下拉两列换行、卡片两列自适应（560px+ 三列）、详情/消息/表单/认证页触控尺寸 ≥ 40px、输入框 16px 防 iOS 聚焦缩放、全站接入刘海与底部安全区；新增 `scripts/probe-mobile.mjs` 手机端布局探针（40 项断言）与 `scripts/seed-dev.mjs` 本地数据填充。
 - **v0.7.0**（2026-09-20）：改为**强制账号登录**——浏览公开，发布 / 收藏 / 私信 / 回复 / 举报 / 上传 / 我的 / 消息需登录，未登录跳登录页且登录后回跳；后端全部写接口校验「clientId 已绑定账号」（401 兜底），防伪造身份。
 - **v0.6.1**（2026-09-20）：私信未读数（红点角标+会话清零）、圈子频道（聚合筛选、详情页圈子直达）。

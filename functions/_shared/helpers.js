@@ -27,9 +27,20 @@ export function getString(params, key, fallback = "") {
   return typeof v === "string" && v.trim() ? v.trim() : fallback;
 }
 
+// 取数字参数。兼容普通对象与 URLSearchParams
+// （历史 bug：调用方传的是 URLSearchParams，用 params[key] 取不到值 → limit/offset 被静默忽略，
+//   列表「加载更多」只会重复第一页。改用 .get() 后修复 v0.7.2）
 export function getNumber(params, key, fallback = null) {
-  const v = Number(params[key]);
+  const raw = params && typeof params.get === "function" ? params.get(key) : params?.[key];
+  if (raw === null || raw === undefined || raw === "") return fallback;
+  const v = Number(raw);
   return Number.isFinite(v) ? v : fallback;
+}
+
+// 同上，取字符串参数
+export function getParam(params, key, fallback = "") {
+  const raw = params && typeof params.get === "function" ? params.get(key) : params?.[key];
+  return typeof raw === "string" && raw.trim() ? raw.trim() : fallback;
 }
 
 // 按允许的枚举校验，不合法返回 fallback

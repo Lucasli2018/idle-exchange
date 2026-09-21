@@ -42,11 +42,11 @@ function render(item) {
     </div>`;
 
   const expired = !sold && (Date.now() - item.createdAt > 30 * 86400 * 1000);
-  const ownerActions = `
+  // 「擦亮」只有发布者能用：原实现把它放在 isOwner 之外，非发布者也会看到按钮但点了没反应
+  const ownerActions = isOwner ? `
       ${expired ? `<button class="btn btn-primary" id="bumpBtn">⌛ 已过期 · 擦亮</button>` : ""}
-      ${isOwner ? `<button class="btn ${sold ? "" : "btn-primary"}" id="toggleSold">${sold ? "重新上架" : "标记已出"}</button>
-      <button class="btn" id="deleteBtn" style="color:#e74c3c;">删除</button>` : ""}
-  `;
+      <button class="btn ${sold ? "" : "btn-primary"}" id="toggleSold">${sold ? "重新上架" : "标记已出"}</button>
+      <button class="btn" id="deleteBtn" style="color:#e74c3c;">删除</button>` : "";
 
   $("#detail").innerHTML = `
     ${galleryHtml(item)}
@@ -91,6 +91,26 @@ function render(item) {
     const bumpBtn = $("#bumpBtn");
     if (bumpBtn) bumpBtn.addEventListener("click", () => bumpItem(item));
   }
+
+  loadRelated(item);
+}
+
+// 同类推荐：同分类的其他在售（排除当前物品），横向滑动
+async function loadRelated(item) {
+  try {
+    const d = await api.get(`/api/items?category=${encodeURIComponent(item.category)}&limit=8`);
+    const others = (d.items || []).filter(x => x.id !== item.id).slice(0, 6);
+    if (!others.length) return;
+    const sec = document.createElement("section");
+    sec.className = "related";
+    sec.innerHTML = `<h3 class="related-ttl">同类闲置 ›</h3>
+      <div class="related-list">${others.map(cardHtml).join("")}</div>`;
+    sec.addEventListener("click", e => {
+      const card = e.target.closest(".card");
+      if (card) location.href = `/item.html?id=${card.dataset.id}`;
+    });
+    $("#detail").appendChild(sec);
+  } catch { /* 推荐是附加能力，失败不影响详情展示 */ }
 }
 
 async function toggleFavorite(item) {
